@@ -1,0 +1,38 @@
+{
+    "paths": {
+        "ms_data": "C:\\pioneer-runner\\data\\SCP_Astral_1000pg_24ms",
+        "library": "C:\\pioneer-runner\\libraries\\altimeter_human_len7o40_ch2o3_mc1_SCP_Sep17-2025.poin",
+        "results": "C:\\pioneer-runner\\results\\current\\SCP_Astral_1000pg_24ms"
+    },
+    "output": {
+        "write_csv": true,
+        "write_decoys": false,
+        "delete_temp": true,
+        "plots_per_page": 12
+    },
+    "logging": {
+        "debug_console_level": 0,
+        "max_message_bytes": 4096
+    },
+    "global": {
+        "scoring": {
+            "q_value_threshold": 0.01
+        },
+        "match_between_runs": true,
+        "ms1_quant": false
+    },
+    "first_search": {
+        "fragment_settings": {
+            "min_score": 15
+        }
+    },
+    "acquisition": {
+        "nce": 26,
+        "quad_transmission": {
+            "fit_from_data": true
+        }
+    },
+    "maxLFQ": {
+        "run_to_run_normalization": false
+    }
+}
