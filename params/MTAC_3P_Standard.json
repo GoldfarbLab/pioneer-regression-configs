@@ -2,7 +2,7 @@
   "paths": {
     "ms_data": "C:\\pioneer-runner\\data\\MTAC_3P_Standard",
     "library": "C:\\pioneer-runner\\libraries\\altimeter_3P_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
-    "results": "C:\\pioneer-runner\\data\\current\\MTAC_3P_Standard"
+    "results": "C:\\pioneer-runner\\results\\current\\MTAC_3P_Standard"
   },
   "output": {
     "write_csv": true,
