@@ -1,0 +1,48 @@
+{
+  "composition": {
+    "human_only": [
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj1.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj2.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj3.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj4.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj5.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj6.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj7.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj8.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj9.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj10.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj11.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj12.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj13.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj14.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj15.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj16.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj17.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj18.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj19.arrow",
+      "GO113_DIA_MBRAnalysis_HelaStd_200ngperuL_Inj20.arrow"
+    ],
+    "human_yeast": [
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj1.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj2.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj3.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj4.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj5.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj6.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj7.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj8.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj9.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj10.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj11.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj12.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj13.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj14.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj15.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj16.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj17.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj18.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj19.arrow",
+      "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj20.arrow"
+    ]
+  }
+}
