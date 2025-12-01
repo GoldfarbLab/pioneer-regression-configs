@@ -1,0 +1,10 @@
+{
+    "runs":{
+        "MA5117_DIA_H292_Rep1_EWZ_ES": "KEAP1_WT_1",
+        "MA5118_DIA_H292_Rep2_EWZ_ES": "KEAP1_WT_2",
+        "MA5119_DIA_H292_Rep3_EWZ_ES": "KEAP1_WT_3",
+        "MA5120_DIA_H292_KEAP1KO_Rep1_EWZ_ES": "KEAP1_KO_1",
+        "MA5121_DIA_H292_KEAP1KO_Rep2_EWZ_ES": "KEAP1_KO_2",
+        "MA5122_DIA_H292_KEAP1KO_Rep3_EWZ_ES": "KEAP1_KO_3"
+    }
+}
