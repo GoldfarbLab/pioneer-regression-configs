@@ -2,7 +2,7 @@
     "paths": {
         "ms_data": "C:\\pioneer-runner\\data\\EWZ_2P_MBR_Exploris",
         "library": "C:\\pioneer-runner\\libraries\\altimeter_YeastHuman_len7o40_ch2o3_mc1_Eclipse_Sep17-2025.poin",
-        "results": "C:\\pioneer-runner\\results\\current\\YeastMBR_EWZ/EWZ_2P_noMBR_Exploris"
+        "results": "C:\\pioneer-runner\\results\\current\\EWZ_2P_noMBR_Exploris"
     },
     "output": {
         "write_csv": true,
