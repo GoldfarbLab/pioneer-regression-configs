@@ -5,7 +5,7 @@
     "results": "C:\\pioneer-runner\\results\\current\\Olsen_Exploris_3P"
   },
   "output": {
-    "write_csv": true,
+    "write_csv": false,
     "write_decoys": false,
     "delete_temp": true,
     "plots_per_page": 12
