@@ -1,0 +1,25 @@
+{
+  "condition_keys": [
+    "Sample-A-Standard-v2",
+    "Sample-B-Standard-v2"
+  ],
+  "runs": {
+    "Sample-A_Rep1": "Sample-A-Standard-v2",
+    "Sample-A_Rep2": "Sample-A-Standard-v2",
+    "Sample-A_Rep3": "Sample-A-Standard-v2",
+    "Sample-B_Rep1": "Sample-B-Standard-v2",
+    "Sample-B_Rep2": "Sample-B-Standard-v2",
+    "Sample-B_Rep3": "Sample-B-Standard-v2"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "Sample-B-Standard-v2",
+      "denominator_condition": "Sample-A-Standard-v2",
+      "species_ratios": {
+        "ECOLI": 3.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.5
+      }
+    }
+  ]
+}

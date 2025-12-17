@@ -1,0 +1,47 @@
+{
+  "condition_keys": [
+    "A",
+    "B",
+    "C"
+  ],
+  "runs": {
+    "BenchSampleA_Rep1-A_1": "A",
+    "BenchSampleA_Rep2-A_2": "A",
+    "BenchSampleA_Rep3-A_3": "A",
+    "BenchSampleB_Rep1-B_1": "B",
+    "BenchSampleB_Rep2-B_2": "B",
+    "BenchSampleB_Rep3-B_3": "B",
+    "BenchSampleC_Rep1-C_1": "C",
+    "BenchSampleC_Rep2-C_2": "C",
+    "BenchSampleC_Rep3-C_3": "C"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "A",
+      "denominator_condition": "C",
+      "species_ratios": {
+        "ECOLI": 6.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.166667
+      }
+    },
+    {
+      "numerator_condition": "B",
+      "denominator_condition": "C",
+      "species_ratios": {
+        "ECOLI": 1.5,
+        "HUMAN": 1.0,
+        "YEAST": 0.3333
+      }
+    },
+    {
+      "numerator_condition": "A",
+      "denominator_condition": "B",
+      "species_ratios": {
+        "ECOLI": 4.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.5
+      }
+    }
+  ]
+}

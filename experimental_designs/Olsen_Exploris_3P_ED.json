@@ -1,0 +1,64 @@
+{
+  "condition_keys": [
+    "E10H50Y40",
+    "E40H50Y10",
+    "E20H50Y30",
+    "E30H50Y20",
+    "E5H50Y45",
+    "E45H50Y5"
+  ],
+  "runs": {
+    "E10H50Y40_1": "E10H50Y40",
+    "E10H50Y40_2": "E10H50Y40",
+    "E10H50Y40_3": "E10H50Y40",
+    "E10H50Y40_4": "E10H50Y40",
+    "E20H50Y30_1": "E20H50Y30",
+    "E20H50Y30_2": "E20H50Y30",
+    "E20H50Y30_3": "E20H50Y30",
+    "E20H50Y30_4": "E20H50Y30",
+    "E30H50Y20_1": "E30H50Y20",
+    "E30H50Y20_2": "E30H50Y20",
+    "E30H50Y20_3": "E30H50Y20",
+    "E30H50Y20_4": "E30H50Y20",
+    "E40H50Y10_1": "E40H50Y10",
+    "E40H50Y10_2": "E40H50Y10",
+    "E40H50Y10_3": "E40H50Y10",
+    "E40H50Y10_4": "E40H50Y10",
+    "E45H50Y5_1": "E45H50Y5",
+    "E45H50Y5_2": "E45H50Y5",
+    "E45H50Y5_3": "E45H50Y5",
+    "E45H50Y5_4": "E45H50Y5",
+    "E5H50Y45_1": "E5H50Y45",
+    "E5H50Y45_2": "E5H50Y45",
+    "E5H50Y45_4": "E5H50Y45"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "E10H50Y40",
+      "denominator_condition": "E40H50Y10",
+      "species_ratios": {
+        "ECOLI": 4.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.25
+      }
+    },
+    {
+      "numerator_condition": "E20H50Y30",
+      "denominator_condition": "E30H50Y20",
+      "species_ratios": {
+        "ECOLI": 1.5,
+        "HUMAN": 1.0,
+        "YEAST": 0.6666
+      }
+    },
+    {
+      "numerator_condition": "E5H50Y45",
+      "denominator_condition": "E45H50Y5",
+      "species_ratios": {
+        "ECOLI": 9.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.1111
+      }
+    }
+  ]
+}
