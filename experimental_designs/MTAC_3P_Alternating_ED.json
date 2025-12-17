@@ -13,8 +13,8 @@
   },
   "expected_ratios": [
     {
-      "numerator_condition": "Sample-B-Alternating-v2",
-      "denominator_condition": "Sample-A-Alternating-v2",
+      "numerator_condition": "Sample-A-Alternating-v2",
+      "denominator_condition": "Sample-B-Alternating-v2",
       "species_ratios": {
         "ECOLI": 3.0,
         "HUMAN": 1.0,
