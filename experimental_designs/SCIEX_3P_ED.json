@@ -17,8 +17,8 @@
   },
   "expected_ratios": [
     {
-      "numerator_condition": "A",
-      "denominator_condition": "C",
+      "numerator_condition": "C",
+      "denominator_condition": "A",
       "species_ratios": {
         "ECOLI": 6.0,
         "HUMAN": 1.0,
@@ -26,8 +26,8 @@
       }
     },
     {
-      "numerator_condition": "B",
-      "denominator_condition": "C",
+      "numerator_condition": "C",
+      "denominator_condition": "B",
       "species_ratios": {
         "ECOLI": 1.5,
         "HUMAN": 1.0,
@@ -35,8 +35,8 @@
       }
     },
     {
-      "numerator_condition": "A",
-      "denominator_condition": "B",
+      "numerator_condition": "B",
+      "denominator_condition": "A",
       "species_ratios": {
         "ECOLI": 4.0,
         "HUMAN": 1.0,

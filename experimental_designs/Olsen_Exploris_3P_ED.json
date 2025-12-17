@@ -34,8 +34,8 @@
   },
   "expected_ratios": [
     {
-      "numerator_condition": "E10H50Y40",
-      "denominator_condition": "E40H50Y10",
+      "numerator_condition": "E40H50Y10",
+      "denominator_condition": "E10H50Y40",
       "species_ratios": {
         "ECOLI": 4.0,
         "HUMAN": 1.0,
@@ -43,8 +43,8 @@
       }
     },
     {
-      "numerator_condition": "E20H50Y30",
-      "denominator_condition": "E30H50Y20",
+      "numerator_condition": "E30H50Y20",
+      "denominator_condition": "E20H50Y30",
       "species_ratios": {
         "ECOLI": 1.5,
         "HUMAN": 1.0,
@@ -52,8 +52,8 @@
       }
     },
     {
-      "numerator_condition": "E5H50Y45",
-      "denominator_condition": "E45H50Y5",
+      "numerator_condition": "E45H50Y5",
+      "denominator_condition": "E5H50Y45",
       "species_ratios": {
         "ECOLI": 9.0,
         "HUMAN": 1.0,
