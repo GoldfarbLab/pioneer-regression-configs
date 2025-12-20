@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/Olsen_Exploris_3P",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_3P_len7o40_ch2o3_mc1_OlsenExploris_Sep17-2025.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_3P_len7o40_ch2o3_mc1_OlsenExploris_Sep17-2025.poin",
     "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/Olsen_Exploris_3P"
   },
   "output": {

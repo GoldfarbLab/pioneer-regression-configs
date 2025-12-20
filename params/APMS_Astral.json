@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/APMS_Astral",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_astralAPMS-Oct-7-2025.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_astralAPMS-Oct-7-2025.poin",
     "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/APMS_Astral"
   },
   "output": {

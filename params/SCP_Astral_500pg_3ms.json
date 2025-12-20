@@ -1,7 +1,7 @@
 {
     "paths": {
         "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/SCP_Astral_500pg_3ms",
-        "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_human_len7o40_ch2o3_mc1_SCP_Sep17-2025.poin",
+        "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_human_len7o40_ch2o3_mc1_SCP_Sep17-2025.poin",
         "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/SCP_Astral_500pg_3ms"
     },
     "output": {

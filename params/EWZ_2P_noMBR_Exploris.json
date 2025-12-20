@@ -1,7 +1,7 @@
 {
     "paths": {
         "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/EWZ_2P_MBR_Exploris",
-        "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_YeastHuman_len7o40_ch2o3_mc1_Eclipse_Sep17-2025.poin",
+        "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_YeastHuman_len7o40_ch2o3_mc1_Eclipse_Sep17-2025.poin",
         "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/EWZ_2P_noMBR_Exploris"
     },
     "output": {

@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/MTAC_Yeast_Standard_5min",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
     "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/MTAC_Yeast_Standard_5min"
   },
   "output": {
