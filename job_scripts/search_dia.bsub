@@ -11,25 +11,10 @@
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.err.txt
 
-
-
-echo "Inside job"
-echo "PATH=$PATH"
-echo "OS:"
-cat /etc/os-release || echo "no /etc/os-release"
-echo
-echo "which julia:"
-which julia || echo "julia not found"
-
-echo
-echo "trying /usr/local/julia/bin/julia:"
-/usr/local/julia/bin/julia -e 'println(VERSION)' || echo "that path failed"
-
-
 set -euo pipefail
 : "${PIONEER_DIR:?PIONEER_DIR not set}"
 : "${PARAM_FILE:?PARAM_FILE not set}"
 
 export JULIA_NUM_THREADS=16
 
-julia --project="$PIONEER_DIR" -e 'using Pioneer; SearchDIA(ENV["PARAM_FILE"])'
+/usr/local/julia/bin/julia --project="$PIONEER_DIR" -e 'using Pioneer; SearchDIA(ENV["PARAM_FILE"])'
