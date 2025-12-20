@@ -18,12 +18,13 @@ set -euo pipefail
 export JULIA_NUM_THREADS=16
 JULIA=/usr/local/julia/bin/julia
 
+export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+mkdir -p "$JULIA_DEPOT_PATH"
+
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
     # Ensure all dependencies (including Pioneer in dev mode, if applicable) are present
     Pkg.instantiate()
-    # Optional but nice: precompile to reduce runtime latency for repeated runs
-    Pkg.precompile()
 
     using Pioneer
     SearchDIA(ENV["PARAM_FILE"])

@@ -1,0 +1,24 @@
+#BSUB -g /d.goldfarb/compute
+#BSUB -G compute-d.goldfarb
+#BSUB -a 'docker(julia:1.11.7)'
+#BSUB -J pioneer-setup
+#BSUB -q general
+#BSUB -R "rusage[mem=16GB] span[hosts=1]"
+#BSUB -n 4
+#BSUB -W 120
+#BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.err
+
+set -euo pipefail
+: "${PIONEER_DIR:?PIONEER_DIR not set}"
+
+export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+mkdir -p "$JULIA_DEPOT_PATH"
+
+JULIA=/usr/local/julia/bin/julia
+
+"$JULIA" --project="$PIONEER_DIR" -e '
+    using Pkg
+    Pkg.instantiate()
+    Pkg.precompile()
+'
