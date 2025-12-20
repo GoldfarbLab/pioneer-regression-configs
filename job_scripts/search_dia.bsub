@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(julia:1.11-bullseye)'
+#BSUB -a 'docker(julia:1.11.7)'
 #BSUB -J regression-search
 #BSUB -q general
 #BSUB -R "rusage[mem=32GB] span[hosts=1]"
