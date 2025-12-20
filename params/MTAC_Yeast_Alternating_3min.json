@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "C:\\pioneer-runner\\data\\MTAC_Yeast_Alternating_3min\\",
-    "library": "C:\\pioneer-runner\\libraries\\altimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\MTAC_Yeast_Alternating_3min"
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/MTAC_Yeast_Alternating_3min\\",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/MTAC_Yeast_Alternating_3min"
   },
   "output": {
     "write_csv": false,

@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "C:\\pioneer-runner\\data\\KEAP1KO_Eclipse",
-    "library": "C:\\pioneer-runner\\libraries\\altimeter_human_len7o40_ch2o3_mc1_Major_Nov20-2025.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\KEAP1KO_Eclipse"
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/KEAP1KO_Eclipse",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_human_len7o40_ch2o3_mc1_Major_Nov20-2025.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/KEAP1KO_Eclipse"
   },
   "output": {
     "write_csv": false,

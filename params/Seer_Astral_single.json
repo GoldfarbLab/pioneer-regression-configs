@@ -1,8 +1,8 @@
 {
   "paths": {
     "ms_data": "C:\\pioneer-runner\\Seer_Astral_single",
-        "library": "C:\\pioneer-runner\\libraries\\altimeter_human_len7o40_ch2o3_mc1_Seer_Nov20-2025.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\Seer_Astral_single"
+        "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_human_len7o40_ch2o3_mc1_Seer_Nov20-2025.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/Seer_Astral_single"
   },
   "output": {
     "write_csv": false,

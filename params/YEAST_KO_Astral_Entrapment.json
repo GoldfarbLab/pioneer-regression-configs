@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "C:\\pioneer-runner\\data\\YEAST_KO",
-    "library": "C:\\pioneer-runner\\libraries\\altimeter_yeast_len7o40_ch2o3_mc1_OlsenAstral_Sep17-2025_entrapR1.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\YEAST_KO_Astral_Entrapment"
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/YEAST_KO",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_yeast_len7o40_ch2o3_mc1_OlsenAstral_Sep17-2025_entrapR1.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/YEAST_KO_Astral_Entrapment"
   },
   "output": {
     "write_csv": false,

@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "C:\\pioneer-runner\\data\\APMS_Astral",
-    "library": "C:\\pioneer-runner\\libraries\\altimeter_astralAPMS-Oct-7-2025.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\APMS_Astral"
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/APMS_Astral",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_astralAPMS-Oct-7-2025.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/APMS_Astral"
   },
   "output": {
     "write_csv": false,

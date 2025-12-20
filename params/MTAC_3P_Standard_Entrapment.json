@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "C:\\pioneer-runner\\data\\MTAC_3P_Standard",
-    "library": "C:\\pioneer-runner\\libraries\\altimeter_3P_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025_entrapR1.poin",
-    "results": "C:\\pioneer-runner\\results\\current\\MTAC_3P_Standard_Entrapment"
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/MTAC_3P_Standard",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/librariesaltimeter_3P_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025_entrapR1.poin",
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/MTAC_3P_Standard_Entrapment"
   },
   "output": {
     "write_csv": false,
