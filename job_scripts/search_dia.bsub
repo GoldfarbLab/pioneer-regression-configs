@@ -16,5 +16,15 @@ set -euo pipefail
 : "${PARAM_FILE:?PARAM_FILE not set}"
 
 export JULIA_NUM_THREADS=16
+JULIA=/usr/local/julia/bin/julia
 
-/usr/local/julia/bin/julia --project="$PIONEER_DIR" -e 'Pkg.instantiate(); using Pioneer; SearchDIA(ENV["PARAM_FILE"])'
+"$JULIA" --project="$PIONEER_DIR" -e '
+    using Pkg
+    # Ensure all dependencies (including Pioneer in dev mode, if applicable) are present
+    Pkg.instantiate()
+    # Optional but nice: precompile to reduce runtime latency for repeated runs
+    Pkg.precompile()
+
+    using Pioneer
+    SearchDIA(ENV["PARAM_FILE"])
+'
