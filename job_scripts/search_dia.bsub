@@ -17,4 +17,4 @@ set -euo pipefail
 
 export JULIA_NUM_THREADS=16
 
-/usr/local/julia/bin/julia --project="$PIONEER_DIR" -e 'using Pioneer; SearchDIA(ENV["PARAM_FILE"])'
+/usr/local/julia/bin/julia --project="$PIONEER_DIR" -e 'Pkg.instantiate(); using Pioneer; SearchDIA(ENV["PARAM_FILE"])'
