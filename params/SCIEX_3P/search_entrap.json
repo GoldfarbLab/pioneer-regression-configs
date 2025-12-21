@@ -2,7 +2,7 @@
   "paths": {
     "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/SCIEX_3P",
     "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_3P_len7o40_ch2o3_mc1_Sciex_Sep17-2025_entrapR1.poin",
-    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/current/SCIEX_3P_Entrapment"
+    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/SCIEX_3P_Entrapment"
   },
   "output": {
     "write_csv": false,
