@@ -5,7 +5,7 @@
 #BSUB -J regression-metrics
 #BSUB -q general
 #BSUB -R "rusage[mem=16GB] span[hosts=1]"
-#BSUB -n 2
+#BSUB -n 8
 #BSUB -W 240
 #BSUB -M 16GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.out.txt
@@ -13,24 +13,12 @@
 
 set -euo pipefail
 : "${PIONEER_DIR:?PIONEER_DIR not set}"
-: "${PIONEER_ENTRAPMENT_DIR:?PIONEER_ENTRAPMENT_DIR not set}"
-: "${PARAMS_DIR:?PARAMS_DIR not set}"
-: "${METRICS_FILE:?METRICS_FILE not set}"
+: "${PIONEER_PARAMS_DIR:?PIONEER_PARAMS_DIR not set}"
+: "${PIONEER_METRICS_FILE:?PIONEER_METRICS_FILE not set}"
 
-export JULIA_NUM_THREADS=2
+export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-8}
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
-mkdir -p "$JULIA_DEPOT_PATH"
+export ENTRAPMENT_ANALYSES_PATH="${ENTRAPMENT_ANALYSES_PATH:-${PIONEER_ENTRAPMENT_DIR:-}}"
+
 JULIA=/usr/local/julia/bin/julia
-
-"$JULIA" --project="$PIONEER_DIR" -e '
-    using Pkg
-    Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
-    Pkg.instantiate()
-
-    using Pioneer
-    using PioneerEntrapment
-
-    metrics_cfg = PioneerEntrapment.load_metrics_config(ENV["METRICS_FILE"])
-    exp_design = isempty(ENV["EXPERIMENTAL_DESIGN_FILE"]) ? nothing : ENV["EXPERIMENTAL_DESIGN_FILE"]
-    PioneerEntrapment.run_metrics(params_dir=ENV["PARAMS_DIR"], metrics_config=metrics_cfg; experimental_design_path=exp_design)
-'
+"$JULIA" --project="$PIONEER_DIR" "$PIONEER_DIR/test/regression/regression_metrics.jl"
