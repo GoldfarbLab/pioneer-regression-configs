@@ -1,3 +1,4 @@
 {
-    "metrics": ["runtime", "identification", "fold-change", "CV"]
+    "search": ["runtime", "identification", "fold-change", "CV"],
+    "search_entrap": ["runtime", "eFDR"]
 }

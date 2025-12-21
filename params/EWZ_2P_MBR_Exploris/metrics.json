@@ -1,3 +1,5 @@
 {
-    "metrics": ["runtime", "identification", "FTR"]
+    "search_MBR": ["runtime", "identification", "FTR"],
+    "search_noMBR": ["runtime", "identification"],
+    "search_entrap": ["runtime", "eFDR"]
 }

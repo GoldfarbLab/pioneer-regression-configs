@@ -1,3 +1,4 @@
 {
-    "metrics": ["runtime", "identification", "CV"]
+    "search": ["runtime", "identification", "CV"],
+    "search_entrap": ["runtime", "eFDR"]
 }

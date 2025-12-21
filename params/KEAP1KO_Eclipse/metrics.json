@@ -1,3 +1,4 @@
 {
-    "metrics": ["runtime", "identification", "KEAP1"]
+    "search": ["runtime", "identification", "KEAP1"],
+    "search_entrap": ["runtime", "eFDR"]
 }
