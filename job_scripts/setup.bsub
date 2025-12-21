@@ -11,6 +11,7 @@
 
 set -euo pipefail
 : "${PIONEER_DIR:?PIONEER_DIR not set}"
+: "${PIONEER_ENTRAPMENT_DIR:?PIONEER_ENTRAPMENT_DIR not set}"
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 mkdir -p "$JULIA_DEPOT_PATH"
@@ -19,6 +20,7 @@ JULIA=/usr/local/julia/bin/julia
 
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
+    Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
     Pkg.instantiate()
     Pkg.precompile()
 '
