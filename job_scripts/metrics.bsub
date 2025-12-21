@@ -5,7 +5,7 @@
 #BSUB -J regression-metrics
 #BSUB -q general
 #BSUB -R "rusage[mem=16GB] span[hosts=1]"
-#BSUB -n 8
+#BSUB -n 2
 #BSUB -W 240
 #BSUB -M 16GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.out.txt
@@ -17,7 +17,7 @@ set -euo pipefail
 : "${PARAMS_DIR:?PARAMS_DIR not set}"
 : "${METRICS_FILE:?METRICS_FILE not set}"
 
-export JULIA_NUM_THREADS=8
+export JULIA_NUM_THREADS=2
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 mkdir -p "$JULIA_DEPOT_PATH"
 JULIA=/usr/local/julia/bin/julia
