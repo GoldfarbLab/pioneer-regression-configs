@@ -1,0 +1,43 @@
+#!/bin/bash
+#BSUB -g /d.goldfarb/compute
+#BSUB -G compute-d.goldfarb
+#BSUB -a 'docker(julia:1.11.7)'
+#BSUB -J pioneer-cleanup
+#BSUB -q general
+#BSUB -R "rusage[mem=4GB] span[hosts=1]"
+#BSUB -n 2
+#BSUB -W 60
+#BSUB -M 4GB
+#BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.out
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.err
+
+set -euo pipefail
+: "${RUN_DIR:?RUN_DIR not set}"
+: "${RUN_SUFFIX:?RUN_SUFFIX not set}"
+
+case "$RUN_DIR" in
+  /storage1/fs1/d.goldfarb/Active/Automation/Pioneer/run-*) ;;
+  *) echo "Refusing to clean unexpected run dir: $RUN_DIR" >&2; exit 1 ;;
+esac
+
+if [ "${RUN_DIR##*/}" != "$RUN_SUFFIX" ]; then
+  echo "Run directory suffix mismatch: expected $RUN_SUFFIX, found ${RUN_DIR##*/}" >&2
+  exit 1
+fi
+
+results_dir="$RUN_DIR/results"
+if [ ! -d "$results_dir" ]; then
+  echo "Results directory missing at $results_dir" >&2
+  exit 1
+fi
+
+shopt -s dotglob nullglob
+for entry in "$RUN_DIR"/* "$RUN_DIR"/.*; do
+  base="$(basename "$entry")"
+  if [ "$base" = "." ] || [ "$base" = ".." ] || [ "$entry" = "$results_dir" ]; then
+    continue
+  fi
+  rm -rf -- "$entry"
+done
+
+echo "Cleanup complete; preserved results at $results_dir"
