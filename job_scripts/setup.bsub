@@ -21,7 +21,7 @@ JULIA=/usr/local/julia/bin/julia
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
     Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
-    Pkg.develop(path=ENV["/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/pioneer-metrics/"])
+    Pkg.develop(path="/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/pioneer-metrics/")
     Pkg.instantiate()
     Pkg.precompile()
 '
