@@ -4,10 +4,10 @@
 #BSUB -a 'docker(julia:1.11.7)'
 #BSUB -J regression-search
 #BSUB -q general
-#BSUB -R "rusage[mem=32GB] span[hosts=1]"
+#BSUB -R "rusage[mem=64GB] span[hosts=1]"
 #BSUB -n 16
 #BSUB -W 3000
-#BSUB -M 32GB
+#BSUB -M 64GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.err.txt
 
