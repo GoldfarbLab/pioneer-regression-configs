@@ -137,7 +137,7 @@ function format_delta(current, previous)
     NA
 end
 
-function build_report(version_data::Dict{String, Dict{String, Dict{String, Float64}}}, versions::Vector{String})
+function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
     println(buffer, "# Regression Metrics Report")
     println(buffer, "")
@@ -146,7 +146,10 @@ function build_report(version_data::Dict{String, Dict{String, Dict{String, Float
 
     searches = Set{String}()
     for version in versions
-        union!(searches, keys(version_data[version]))
+        searches_entry = get(version_data, version, Dict{String, Any}())
+        if searches_entry isa AbstractDict
+            union!(searches, keys(searches_entry))
+        end
     end
     searches_sorted = sort(collect(searches))
     for search in searches_sorted
@@ -155,8 +158,11 @@ function build_report(version_data::Dict{String, Dict{String, Dict{String, Float
 
         datasets = Set{String}()
         for version in versions
-            metrics_by_search = get(version_data[version], search, Dict{String, Dict{String, Float64}}())
-            union!(datasets, keys(metrics_by_search))
+            searches_entry = get(version_data, version, Dict{String, Any}())
+            metrics_by_search = searches_entry isa AbstractDict ?
+                get(searches_entry, search, Dict{String, Any}()) :
+                Dict{String, Any}()
+            metrics_by_search isa AbstractDict && union!(datasets, keys(metrics_by_search))
         end
         for dataset in sort(collect(datasets))
             println(buffer, "### Dataset: ", dataset)
@@ -166,17 +172,27 @@ function build_report(version_data::Dict{String, Dict{String, Dict{String, Float
 
             all_metrics = Set{String}()
             for version in versions
-                metrics_by_search = get(version_data[version], search, Dict{String, Dict{String, Float64}}())
-                metrics = get(metrics_by_search, dataset, Dict{String, Float64}())
-                union!(all_metrics, keys(metrics))
+                searches_entry = get(version_data, version, Dict{String, Any}())
+                metrics_by_search = searches_entry isa AbstractDict ?
+                    get(searches_entry, search, Dict{String, Any}()) :
+                    Dict{String, Any}()
+                metrics = metrics_by_search isa AbstractDict ?
+                    get(metrics_by_search, dataset, Dict{String, Any}()) :
+                    Dict{String, Any}()
+                metrics isa AbstractDict && union!(all_metrics, keys(metrics))
             end
 
             for metric in sort(collect(all_metrics))
                 prev_value = missing
                 for (idx, version) in enumerate(versions)
-                    metrics_by_search = get(version_data[version], search, Dict{String, Dict{String, Float64}}())
-                    metrics = get(metrics_by_search, dataset, Dict{String, Float64}())
-                    value = get(metrics, metric, missing)
+                    searches_entry = get(version_data, version, Dict{String, Any}())
+                    metrics_by_search = searches_entry isa AbstractDict ?
+                        get(searches_entry, search, Dict{String, Any}()) :
+                        Dict{String, Any}()
+                    metrics = metrics_by_search isa AbstractDict ?
+                        get(metrics_by_search, dataset, Dict{String, Any}()) :
+                        Dict{String, Any}()
+                    value = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
                     delta = idx == 1 ? NA : format_delta(value, prev_value)
                     println(
                         buffer,
@@ -214,7 +230,7 @@ function main()
     push!(versions, "develop")
     push!(versions, "current")
 
-    version_data = Dict{String, Dict{String, Dict{String, Float64}}}()
+    version_data = Dict{String, Any}()
     for version in versions
         if version == "develop"
             version_data[version] = collect_metrics(develop_root)
