@@ -137,6 +137,35 @@ function format_delta(current, previous)
     NA
 end
 
+function metric_group(metric::AbstractString)
+    parts = split(metric, ".")
+    isempty(parts) ? metric : parts[1]
+end
+
+function normalized_group(group::AbstractString)
+    replace(group, "-" => "_")
+end
+
+function metric_group_order()
+    Dict(
+        "identification" => 1,
+        "entrapment" => 2,
+        "ftr" => 3,
+        "keap1" => 4,
+        "cv" => 5,
+        "fold_change" => 6,
+        "runtime" => 7,
+    )
+end
+
+function ordered_metrics(metrics::Vector{String})
+    order_map = metric_group_order()
+    sort(metrics; by = metric -> begin
+        group = normalized_group(metric_group(metric))
+        (get(order_map, group, length(order_map) + 1), metric)
+    end)
+end
+
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
     println(buffer, "### Regression Metrics Report")
@@ -164,11 +193,26 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 Dict{String, Any}()
             metrics_by_search isa AbstractDict && union!(datasets, keys(metrics_by_search))
         end
-        for dataset in sort(collect(datasets))
-            println(buffer, "**Dataset:** ", dataset)
+        datasets_sorted = sort(collect(datasets))
+
+        all_metrics = Set{String}()
+        for version in versions
+            searches_entry = get(version_data, version, Dict{String, Any}())
+            metrics_by_search = searches_entry isa AbstractDict ?
+                get(searches_entry, search, Dict{String, Any}()) :
+                Dict{String, Any}()
+            if metrics_by_search isa AbstractDict
+                for dataset in datasets_sorted
+                    metrics = get(metrics_by_search, dataset, Dict{String, Any}())
+                    metrics isa AbstractDict && union!(all_metrics, keys(metrics))
+                end
+            end
+        end
+
+        for metric in ordered_metrics(collect(all_metrics))
+            println(buffer, "**Metric:** ", metric)
             println(buffer, "")
-            println(buffer, "<small>")
-            header_parts = ["Metric"; versions]
+            header_parts = ["Dataset"; versions]
             if length(versions) > 1
                 append!(
                     header_parts,
@@ -178,19 +222,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             println(buffer, "| ", join(header_parts, " | "), " |")
             println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
 
-            all_metrics = Set{String}()
-            for version in versions
-                searches_entry = get(version_data, version, Dict{String, Any}())
-                metrics_by_search = searches_entry isa AbstractDict ?
-                    get(searches_entry, search, Dict{String, Any}()) :
-                    Dict{String, Any}()
-                metrics = metrics_by_search isa AbstractDict ?
-                    get(metrics_by_search, dataset, Dict{String, Any}()) :
-                    Dict{String, Any}()
-                metrics isa AbstractDict && union!(all_metrics, keys(metrics))
-            end
-
-            for metric in sort(collect(all_metrics))
+            for dataset in datasets_sorted
                 values = Vector{Any}(undef, length(versions))
                 for (idx, version) in enumerate(versions)
                     searches_entry = get(version_data, version, Dict{String, Any}())
@@ -212,10 +244,9 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                     end
                 end
 
-                row_parts = [metric; [format_value(value) for value in values]; deltas]
+                row_parts = [dataset; [format_value(value) for value in values]; deltas]
                 println(buffer, "| ", join(row_parts, " | "), " |")
             end
-            println(buffer, "</small>")
             println(buffer, "")
         end
     end
