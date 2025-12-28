@@ -20,9 +20,17 @@ export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia
 export ENTRAPMENT_ANALYSES_PATH="${ENTRAPMENT_ANALYSES_PATH:-${PIONEER_ENTRAPMENT_DIR:-}}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_dir="$(cd "${script_dir}/.." && pwd)"
+repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
+if [[ -z "$repo_dir" ]]; then
+    repo_dir="$(cd "${script_dir}/.." && pwd)"
+fi
 metrics_project="${repo_dir}/julia"
-metrics_script="${repo_dir}/julia/regression_metrics.jl"
+metrics_script="${metrics_project}/regression_metrics.jl"
+if [[ ! -f "$metrics_script" ]]; then
+    echo "ERROR: regression metrics script not found at ${metrics_script}" >&2
+    echo "Set PIONEER_REGRESSION_CONFIGS_DIR to the repo root and ensure it is mounted in the container." >&2
+    exit 1
+fi
 
 JULIA=/usr/local/julia/bin/julia
 "$JULIA" --project="$metrics_project" "$metrics_script"
