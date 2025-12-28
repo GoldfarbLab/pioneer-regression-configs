@@ -1,3 +1,4 @@
+#!/bin/bash
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
 #BSUB -a 'docker(julia:1.11.7)'
@@ -16,6 +17,13 @@ set -euo pipefail
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 mkdir -p "$JULIA_DEPOT_PATH"
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
+if [[ -z "$repo_dir" ]]; then
+    repo_dir="$(cd "${script_dir}/.." && pwd)"
+fi
+metrics_project="${repo_dir}/julia"
+
 JULIA=/usr/local/julia/bin/julia
 
 "$JULIA" --project="$PIONEER_DIR" -e '
@@ -24,3 +32,13 @@ JULIA=/usr/local/julia/bin/julia
     Pkg.instantiate()
     Pkg.precompile()
 '
+
+if [[ -d "$metrics_project" ]]; then
+    "$JULIA" --project="$metrics_project" -e '
+        using Pkg
+        Pkg.instantiate()
+        Pkg.precompile()
+    '
+else
+    echo "WARNING: regression metrics project not found at ${metrics_project}" >&2
+fi
