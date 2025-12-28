@@ -167,8 +167,15 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         for dataset in sort(collect(datasets))
             println(buffer, "### Dataset: ", dataset)
             println(buffer, "")
-            println(buffer, "| Metric | Version | Value | Δ vs prev |")
-            println(buffer, "| --- | --- | --- | --- |")
+            header_parts = ["Metric"; versions]
+            if length(versions) > 1
+                append!(
+                    header_parts,
+                    ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+                )
+            end
+            println(buffer, "| ", join(header_parts, " | "), " |")
+            println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
 
             all_metrics = Set{String}()
             for version in versions
@@ -183,7 +190,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             end
 
             for metric in sort(collect(all_metrics))
-                prev_value = missing
+                values = Vector{Any}(undef, length(versions))
                 for (idx, version) in enumerate(versions)
                     searches_entry = get(version_data, version, Dict{String, Any}())
                     metrics_by_search = searches_entry isa AbstractDict ?
@@ -192,22 +199,20 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                     metrics = metrics_by_search isa AbstractDict ?
                         get(metrics_by_search, dataset, Dict{String, Any}()) :
                         Dict{String, Any}()
-                    value = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
-                    delta = idx == 1 ? NA : format_delta(value, prev_value)
-                    println(
-                        buffer,
-                        "| ",
-                        metric,
-                        " | ",
-                        version,
-                        " | ",
-                        format_value(value),
-                        " | ",
-                        delta,
-                        " |",
-                    )
-                    prev_value = value
+                    values[idx] = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
                 end
+
+                deltas = String[]
+                if length(values) > 1
+                    prev_value = values[1]
+                    for idx in 2:length(values)
+                        push!(deltas, format_delta(values[idx], prev_value))
+                        prev_value = values[idx]
+                    end
+                end
+
+                row_parts = [metric; [format_value(value) for value in values]; deltas]
+                println(buffer, "| ", join(row_parts, " | "), " |")
             end
             println(buffer, "")
         end
