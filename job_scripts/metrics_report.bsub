@@ -1,0 +1,37 @@
+#!/bin/bash
+#BSUB -g /d.goldfarb/compute
+#BSUB -G compute-d.goldfarb
+#BSUB -a 'docker(julia:1.11.7)'
+#BSUB -J regression-metrics-report
+#BSUB -q general
+#BSUB -R "rusage[mem=8GB] span[hosts=1]"
+#BSUB -n 1
+#BSUB -W 600
+#BSUB -M 8GB
+#BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.err.txt
+
+set -euo pipefail
+: "${PIONEER_METRICS_RELEASE_ROOT:?PIONEER_METRICS_RELEASE_ROOT not set}"
+: "${PIONEER_METRICS_DEVELOP_ROOT:?PIONEER_METRICS_DEVELOP_ROOT not set}"
+: "${PIONEER_METRICS_CURRENT_ROOT:?PIONEER_METRICS_CURRENT_ROOT not set}"
+: "${PIONEER_REPORT_OUTPUT:?PIONEER_REPORT_OUTPUT not set}"
+
+export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-1}
+export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
+if [[ -z "$repo_dir" ]]; then
+    repo_dir="$(cd "${script_dir}/.." && pwd)"
+fi
+report_project="${repo_dir}/julia"
+report_script="${report_project}/metrics_report.jl"
+if [[ ! -f "$report_script" ]]; then
+    echo "ERROR: metrics report script not found at ${report_script}" >&2
+    echo "Set PIONEER_REGRESSION_CONFIGS_DIR to the repo root and ensure it is mounted in the container." >&2
+    exit 1
+fi
+
+JULIA=/usr/local/julia/bin/julia
+"$JULIA" --project="$report_project" "$report_script"
