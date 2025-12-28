@@ -1,3 +1,4 @@
+#!/bin/bash
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
 #BSUB -a 'docker(julia:1.11.7)'
