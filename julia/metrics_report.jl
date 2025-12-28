@@ -3,7 +3,7 @@
 using JSON
 using Printf
 
-const NA = "NA"
+const NA = ""
 
 function parse_version_label(label::AbstractString)
     stripped = startswith(label, "v") ? label[2:end] : label
@@ -139,7 +139,7 @@ end
 
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
-    println(buffer, "# Regression Metrics Report")
+    println(buffer, "### Regression Metrics Report")
     println(buffer, "")
     println(buffer, "- Versions: ", join(versions, ", "))
     println(buffer, "")
@@ -153,7 +153,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     end
     searches_sorted = sort(collect(searches))
     for search in searches_sorted
-        println(buffer, "## Search: ", search)
+        println(buffer, "#### Search: ", search)
         println(buffer, "")
 
         datasets = Set{String}()
@@ -165,8 +165,9 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             metrics_by_search isa AbstractDict && union!(datasets, keys(metrics_by_search))
         end
         for dataset in sort(collect(datasets))
-            println(buffer, "### Dataset: ", dataset)
+            println(buffer, "**Dataset:** ", dataset)
             println(buffer, "")
+            println(buffer, "<small>")
             header_parts = ["Metric"; versions]
             if length(versions) > 1
                 append!(
@@ -214,6 +215,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 row_parts = [metric; [format_value(value) for value in values]; deltas]
                 println(buffer, "| ", join(row_parts, " | "), " |")
             end
+            println(buffer, "</small>")
             println(buffer, "")
         end
     end
