@@ -6,6 +6,14 @@ using Statistics
 
 using ..RegressionMetricsHelpers: condition_columns, gene_names_column, mean_for_columns, select_quant_columns, species_column, unique_species_value
 
+function normalize_design_dict(design::AbstractDict)
+    mapped_design = Dict{String, Any}()
+    for (k, v) in design
+        mapped_design[String(k)] = v
+    end
+    mapped_design
+end
+
 function load_experimental_design(path::AbstractString)
     if isdir(path)
         files = filter(f -> endswith(f, ".ED.json") || endswith(f, "_ED.json") || endswith(f, ".json"), readdir(path; join=true))
@@ -41,14 +49,9 @@ function load_experimental_design(path::AbstractString)
             if has_runs && length(design) == 1
                 return Dict{String, Any}("runs" => design["runs"])
             elseif has_runs
-                return design
+                return normalize_design_dict(design)
             end
-
-            mapped_design = Dict{String, Any}()
-            for (k, v) in design
-                mapped_design[String(k)] = v
-            end
-            return mapped_design
+            return normalize_design_dict(design)
         end
 
         @warn "Experimental design file is not a dictionary; ignoring" experimental_design_path=path
