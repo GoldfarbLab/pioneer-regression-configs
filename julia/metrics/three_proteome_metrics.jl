@@ -35,7 +35,7 @@ function load_experimental_design(path::AbstractString)
     end
 
     try
-        design = JSON.parsefile(path)
+        design = JSON.parsefile(path; dicttype=Dict)
         if design isa AbstractDict
             has_runs = haskey(design, "runs")
             if has_runs && length(design) == 1
@@ -348,7 +348,7 @@ function load_three_proteome_designs(path::AbstractString)
 
     @info "Loading three-proteome design file" three_proteome_design_path=path
     try
-        parsed = JSON.parsefile(path)
+        parsed = JSON.parsefile(path; dicttype=Dict)
         if parsed isa AbstractDict
             contains_direct_design =
                 haskey(parsed, "runs") || haskey(parsed, "expected_ratios") || haskey(parsed, "condition_pairs") || haskey(parsed, "species_ratios")

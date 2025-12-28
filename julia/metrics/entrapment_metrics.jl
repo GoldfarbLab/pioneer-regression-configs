@@ -14,7 +14,7 @@ function load_dataset_config(dataset_dir::AbstractString)
     end
 
     try
-        return JSON.parsefile(config_path)
+        return JSON.parsefile(config_path; dicttype=Dict)
     catch err
         @warn "Failed to parse dataset config; skipping entrapment metrics" config_path=config_path error=err
         return nothing
