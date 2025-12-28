@@ -28,17 +28,14 @@ function sorted_release_versions(root::AbstractString)
         isdir(path)
     end
     labels = map(basename, versions)
-    sort(
-        labels;
-        by = label -> begin
-            parsed = parse_version_label(label)
-            if parsed === nothing
-                return (typemax(Int), typemax(Int), typemax(Int), label)
-            end
-            padded = vcat(parsed, fill(0, max(0, 3 - length(parsed))))
-            return (padded[1], padded[2], padded[3], label)
-        end,
-    )
+    sort(labels) do a, b
+        parsed_a = parse_version_label(a)
+        parsed_b = parse_version_label(b)
+        if parsed_a === nothing || parsed_b === nothing
+            return a < b
+        end
+        return parsed_a < parsed_b
+    end
 end
 
 function flatten_metrics(metrics::Any; prefix::AbstractString = "")
