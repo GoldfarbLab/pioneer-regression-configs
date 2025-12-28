@@ -33,4 +33,5 @@ if [[ ! -f "$metrics_script" ]]; then
 fi
 
 JULIA=/usr/local/julia/bin/julia
+"$JULIA" --project="$metrics_project" -e 'using Pkg; Pkg.instantiate()'
 "$JULIA" --project="$metrics_project" "$metrics_script"
