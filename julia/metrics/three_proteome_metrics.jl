@@ -4,8 +4,7 @@ using DataFrames
 using JSON
 using Statistics
 
-include("metrics_helpers.jl")
-using .RegressionMetricsHelpers: condition_columns, gene_names_column, mean_for_columns, select_quant_columns, species_column, unique_species_value
+using ..RegressionMetricsHelpers: condition_columns, gene_names_column, mean_for_columns, select_quant_columns, species_column, unique_species_value
 
 function load_experimental_design(path::AbstractString)
     if isdir(path)
