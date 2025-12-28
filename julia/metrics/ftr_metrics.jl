@@ -1,3 +1,5 @@
+using DataFrames
+
 function ftr_metrics_for_table(
     mbr_df::DataFrame,
     no_mbr_df::DataFrame,
