@@ -8,7 +8,7 @@ const NA = "NA"
 function parse_version_label(label::AbstractString)
     stripped = startswith(label, "v") ? label[2:end] : label
     parts = split(stripped, '.')
-    if isempty(parts)
+    if length(parts) != 3
         return nothing
     end
     nums = Int[]
@@ -28,14 +28,14 @@ function sorted_release_versions(root::AbstractString)
         isdir(path)
     end
     labels = map(basename, versions)
-    sort(labels) do a, b
+    sort(labels; lt = (a, b) -> begin
         parsed_a = parse_version_label(a)
         parsed_b = parse_version_label(b)
         if parsed_a === nothing || parsed_b === nothing
             return a < b
         end
         return parsed_a < parsed_b
-    end
+    end)
 end
 
 function flatten_metrics(metrics::Any; prefix::AbstractString = "")
