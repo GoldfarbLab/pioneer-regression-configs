@@ -201,7 +201,7 @@ function load_metrics_config(path::AbstractString)
     end
 
     try
-        raw = JSON.parsefile(path)
+        raw = JSON.parsefile(path; dicttype=Dict)
         if raw isa AbstractDict
             return Dict{String, Any}(String(k) => v for (k, v) in raw)
         end
@@ -475,7 +475,7 @@ function main()
         joinpath(repo_root, "metrics_config.json"),
     )
     metric_group_config = if isfile(metrics_config_path)
-        JSON.parsefile(metrics_config_path)
+        JSON.parsefile(metrics_config_path; dicttype=Dict)
     else
         @info "No metrics_config.json found; using default metric groups" metrics_config_path=metrics_config_path
         Dict{String, Any}()
