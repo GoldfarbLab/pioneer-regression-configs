@@ -12,7 +12,6 @@
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.err.txt
 
 set -euo pipefail
-: "${PIONEER_DIR:?PIONEER_DIR not set}"
 : "${PIONEER_PARAMS_DIR:?PIONEER_PARAMS_DIR not set}"
 : "${PIONEER_METRICS_FILE:?PIONEER_METRICS_FILE not set}"
 
@@ -20,5 +19,10 @@ export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-2}
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 export ENTRAPMENT_ANALYSES_PATH="${ENTRAPMENT_ANALYSES_PATH:-${PIONEER_ENTRAPMENT_DIR:-}}"
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_dir="$(cd "${script_dir}/.." && pwd)"
+metrics_project="${repo_dir}/julia"
+metrics_script="${repo_dir}/julia/regression_metrics.jl"
+
 JULIA=/usr/local/julia/bin/julia
-"$JULIA" --project="$PIONEER_DIR" "$PIONEER_DIR/test/regression/regression_metrics.jl"
+"$JULIA" --project="$metrics_project" "$metrics_script"
