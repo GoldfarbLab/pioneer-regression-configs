@@ -180,7 +180,7 @@ function gene_counts_metrics_by_run(
 
     for (col, count) in counts
         label = get(labels_for_runs, String(col), String(col))
-        metric_name = string(gene_term, "_", level, "_in_", normalize_metric_label(label))
+        metric_name = string(gene_term, "_", normalize_metric_label(label))
         metrics[metric_name] = count
     end
 
