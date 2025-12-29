@@ -166,6 +166,23 @@ function ordered_metrics(metrics::Vector{String})
     end)
 end
 
+function include_metric(metric::AbstractString)
+    if endswith(metric, ".complete_rows") || endswith(metric, ".data_completeness")
+        return false
+    end
+
+    if startswith(metric, "entrapment.")
+        return endswith(metric, ".difference")
+    end
+
+    if startswith(metric, "ftr.")
+        return endswith(metric, ".false_transfer_rate") &&
+            (occursin(".precursors.", metric) || occursin(".protein_groups.", metric))
+    end
+
+    return true
+end
+
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
     println(buffer, "### Regression Metrics Report")
@@ -200,7 +217,9 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         end
     end
 
-    for metric in ordered_metrics(collect(all_metrics))
+    filtered_metrics = filter(include_metric, collect(all_metrics))
+
+    for metric in ordered_metrics(filtered_metrics)
         println(buffer, "**Metric:** ", metric)
         println(buffer, "")
         header_parts = vcat(["Search"], versions)

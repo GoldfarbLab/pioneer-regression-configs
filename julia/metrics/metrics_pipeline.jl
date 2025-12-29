@@ -238,6 +238,19 @@ function compute_dataset_metrics(
                     cv_groups,
                     dataset_name,
                 )
+        elseif need_identification
+            precursor_wide_metrics = compute_wide_metrics(
+                precursors_wide,
+                quant_col_names;
+                table_label = "precursors_wide",
+                dataset_name = dataset_name,
+            )
+            protein_wide_metrics = compute_wide_metrics(
+                protein_groups_wide,
+                protein_quant_col_names;
+                table_label = "protein_groups_wide",
+                dataset_name = dataset_name,
+            )
         end
 
         if need_keap1
@@ -299,6 +312,16 @@ function compute_dataset_metrics(
         precursor_id_metrics !== nothing && merge!(precursors_identification, precursor_id_metrics)
         protein_id_metrics !== nothing && merge!(protein_identification, protein_id_metrics)
 
+        if precursor_wide_metrics !== nothing
+            precursors_identification["complete_rows"] = precursor_wide_metrics.complete_rows
+            precursors_identification["data_completeness"] = precursor_wide_metrics.data_completeness
+        end
+
+        if protein_wide_metrics !== nothing
+            protein_identification["complete_rows"] = protein_wide_metrics.complete_rows
+            protein_identification["data_completeness"] = protein_wide_metrics.data_completeness
+        end
+
         !isempty(precursors_identification) && (identification_metrics_block["precursors"] = precursors_identification)
         !isempty(protein_identification) && (identification_metrics_block["protein_groups"] = protein_identification)
     end
@@ -307,16 +330,6 @@ function compute_dataset_metrics(
     if need_cv
         precursor_cv_block = Dict{String, Any}()
         protein_cv_block = Dict{String, Any}()
-
-        if precursor_wide_metrics !== nothing
-            precursor_cv_block["complete_rows"] = precursor_wide_metrics.complete_rows
-            precursor_cv_block["data_completeness"] = precursor_wide_metrics.data_completeness
-        end
-
-        if protein_wide_metrics !== nothing
-            protein_cv_block["complete_rows"] = protein_wide_metrics.complete_rows
-            protein_cv_block["data_completeness"] = protein_wide_metrics.data_completeness
-        end
 
         precursor_cv_metrics !== nothing && (precursor_cv_block["median_cv"] = precursor_cv_metrics.median_cv)
         protein_cv_metrics !== nothing && (protein_cv_block["median_cv"] = protein_cv_metrics.median_cv)
