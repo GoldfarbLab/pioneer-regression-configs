@@ -16,7 +16,13 @@ end
 
 function load_experimental_design(path::AbstractString)
     if isdir(path)
-        files = filter(f -> endswith(f, ".ED.json") || endswith(f, "_ED.json") || endswith(f, ".json"), readdir(path; join=true))
+        files = String[]
+        for (root, _, filenames) in walkdir(path)
+            for filename in filenames
+                filename == "experimental_design.json" || continue
+                push!(files, joinpath(root, filename))
+            end
+        end
         if isempty(files)
             @info "No experimental design files found; using run names as labels" experimental_design_dir=path
             return Dict{String, Any}()
@@ -25,10 +31,7 @@ function load_experimental_design(path::AbstractString)
         designs = Dict{String, Any}()
 
         for file in files
-            dataset_key = replace(
-                replace(replace(basename(file), r"\.ED\.json$" => ""), r"_ED\.json$" => ""),
-                r"\.json$" => "",
-            )
+            dataset_key = basename(dirname(file))
             parsed = load_experimental_design(file)
             isempty(parsed) && continue
             designs[dataset_key] = parsed
@@ -315,18 +318,23 @@ end
 
 function load_three_proteome_designs(path::AbstractString)
     if isdir(path)
-        json_files = filter(f -> endswith(f, ".json"), readdir(path; join=true))
-        ed_files = filter(f -> endswith(f, ".ED.json"), json_files)
-        @info "Scanning three-proteome design directory" three_proteome_design_dir=path json_files=json_files ed_files=ed_files
-        if isempty(ed_files)
-            @info "No .ED.json three-proteome design files found in directory" three_proteome_design_dir=path
+        design_files = String[]
+        for (root, _, filenames) in walkdir(path)
+            for filename in filenames
+                filename == "experimental_design.json" || continue
+                push!(design_files, joinpath(root, filename))
+            end
+        end
+        @info "Scanning three-proteome design directory" three_proteome_design_dir=path design_files=design_files
+        if isempty(design_files)
+            @info "No experimental_design.json three-proteome design files found in directory" three_proteome_design_dir=path
             return Dict{String, Any}()
         end
 
         designs = Dict{String, Any}()
-        for file in ed_files
+        for file in design_files
             parsed = load_three_proteome_designs(file)
-            base_key = replace(basename(file), r"\.json$" => "")
+            base_key = basename(dirname(file))
             normalized = if parsed isa NamedTuple
                 parsed
             elseif parsed isa Dict
@@ -338,7 +346,6 @@ function load_three_proteome_designs(path::AbstractString)
             normalized === nothing && continue
 
             designs[base_key] = normalized
-            endswith(base_key, ".ED") && (designs[base_key[1:end-3]] = normalized)
         end
 
         return designs
@@ -387,7 +394,6 @@ function three_proteome_design_entry(
         return three_proteome_designs
     elseif three_proteome_designs isa AbstractDict
         entry = get(three_proteome_designs, dataset_name, nothing)
-        entry === nothing && (entry = get(three_proteome_designs, string(dataset_name, ".ED"), nothing))
         if entry === nothing && haskey(three_proteome_designs, "runs")
             entry = three_proteome_designs
         end
