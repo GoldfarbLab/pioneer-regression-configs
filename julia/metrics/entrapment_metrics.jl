@@ -259,8 +259,6 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
         efdr_value = Float64(efdr_value)
 
         return Dict(
-            "qval" => qval_value,
-            "paired_efdr" => efdr_value,
             "difference" => efdr_value - qval_value,
         )
     end

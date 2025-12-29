@@ -19,12 +19,6 @@ function ftr_metrics_for_table(
     ftr = additional_ids_in_human_only > 0 ? additional_yeast_in_human_only / additional_ids_in_human_only : 0.0
 
     return Dict(
-        "yeast_ids_human_only_no_mbr" => yeast_human_only_no_mbr,
-        "yeast_ids_human_only_mbr" => yeast_human_only_mbr,
-        "total_ids_human_only_no_mbr" => total_ids_human_only_no_mbr,
-        "total_ids_human_only_mbr" => total_ids_human_only_mbr,
-        "additional_yeast_ids_in_human_only" => additional_yeast_in_human_only,
-        "additional_ids_in_human_only" => additional_ids_in_human_only,
         "false_transfer_rate" => ftr,
     )
 end
@@ -176,7 +170,5 @@ function compute_ftr_metrics(
     return Dict(
         "precursors" => precursor_metrics,
         "protein_groups" => protein_metrics,
-        "mbr_dataset" => mbr_name,
-        "nombr_dataset" => nombr_name,
     )
 end

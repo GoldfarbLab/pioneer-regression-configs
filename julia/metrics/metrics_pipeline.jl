@@ -308,16 +308,6 @@ function compute_dataset_metrics(
         precursor_cv_block = Dict{String, Any}()
         protein_cv_block = Dict{String, Any}()
 
-        if precursor_wide_metrics !== nothing
-            precursor_cv_block["complete_rows"] = precursor_wide_metrics.complete_rows
-            precursor_cv_block["data_completeness"] = precursor_wide_metrics.data_completeness
-        end
-
-        if protein_wide_metrics !== nothing
-            protein_cv_block["complete_rows"] = protein_wide_metrics.complete_rows
-            protein_cv_block["data_completeness"] = protein_wide_metrics.data_completeness
-        end
-
         precursor_cv_metrics !== nothing && (precursor_cv_block["median_cv"] = precursor_cv_metrics.median_cv)
         protein_cv_metrics !== nothing && (protein_cv_block["median_cv"] = protein_cv_metrics.median_cv)
 
