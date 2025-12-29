@@ -159,7 +159,9 @@ function compute_dataset_metrics(
     need_keap1 = "keap1" in requested_groups
     need_ftr = "ftr" in requested_groups
     need_runtime = "runtime" in requested_groups
-    need_three_proteome = ("fold_change" in requested_groups) || ("three_proteome" in requested_groups)
+    need_three_proteome =
+        ("fold_change" in requested_groups) ||
+        ("three_proteome" in requested_groups)
     need_table_metrics = need_identification || need_cv || need_keap1 || need_ftr || need_three_proteome
 
     dataset_three_proteome_designs = need_three_proteome ? three_proteome_designs : nothing

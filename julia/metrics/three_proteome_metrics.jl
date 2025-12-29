@@ -187,7 +187,7 @@ function gene_counts_metrics_by_run(
     metrics
 end
 
-function fold_change_metrics_for_table(
+function fold_change_log_ratios_for_table(
     df::DataFrame,
     quant_col_names::AbstractVector{<:Union{Symbol, String}},
     design,
@@ -208,7 +208,8 @@ function fold_change_metrics_for_table(
     species_col = species_column(df; table_label = table_label)
     species_col === nothing && return nothing
 
-    metrics = Dict{String, Any}()
+    pair_log_ratios = Dict{String, Dict{String, Vector{Float64}}}()
+    pair_expected_log2 = Dict{String, Dict{String, Float64}}()
 
     for pair in condition_pairs
         numerator_columns = get(condition_to_columns, pair.numerator, Vector{eltype(quant_columns)}())
@@ -253,17 +254,51 @@ function fold_change_metrics_for_table(
             normalize_metric_label(pair.denominator),
         )
 
+        isempty(log_ratios) && continue
+        pair_log_ratios[pair_label] = log_ratios
+        pair_expected_log2[pair_label] = expected_log2_by_species
+    end
+
+    isempty(pair_log_ratios) ? nothing : (; pair_log_ratios, pair_expected_log2)
+end
+
+function fold_change_metrics_for_table(
+    df::DataFrame,
+    quant_col_names::AbstractVector{<:Union{Symbol, String}},
+    design,
+    condition_pairs;
+    table_label::AbstractString,
+)
+    log_ratio_data = fold_change_log_ratios_for_table(
+        df,
+        quant_col_names,
+        design,
+        condition_pairs;
+        table_label = table_label,
+    )
+    log_ratio_data === nothing && return nothing
+
+    metrics = Dict{String, Any}()
+    for (pair_label, log_ratios) in pairs(log_ratio_data.pair_log_ratios)
+        expected_log2_by_species = get(log_ratio_data.pair_expected_log2, pair_label, Dict{String, Float64}())
         pair_metrics = Dict{String, Any}()
         for (species, values) in log_ratios
             median_log2_fc = isempty(values) ? missing : median(values)
             expected_log2 = get(expected_log2_by_species, species, missing)
             deviation = (median_log2_fc === missing || expected_log2 === missing) ? missing : median_log2_fc - expected_log2
+            variance = if isempty(values)
+                missing
+            else
+                median_log2 = median(values)
+                mean((values .- median_log2) .^ 2)
+            end
 
             if deviation !== missing
                 @info "Fold-change deviation" table=table_label pair=pair_label species=species median_log2_fc=median_log2_fc expected_log2_fc=expected_log2 deviation=deviation entries=length(values)
             end
 
             pair_metrics[string(lowercase(species), "_median_deviation")] = deviation
+            pair_metrics[string(lowercase(species), "_fc_variance")] = variance
         end
 
         isempty(pair_metrics) || (metrics[pair_label] = pair_metrics)
