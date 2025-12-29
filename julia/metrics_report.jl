@@ -203,7 +203,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     for metric in ordered_metrics(collect(all_metrics))
         println(buffer, "**Metric:** ", metric)
         println(buffer, "")
-        header_parts = vcat(["Search", "Dataset"], versions)
+        header_parts = vcat(["Search"], versions)
         if length(versions) > 1
             append!(
                 header_parts,
@@ -226,6 +226,9 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 values[idx] = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
             end
 
+            has_value = any(value -> !(value === missing || value === nothing), values)
+            has_value || continue
+
             deltas = String[]
             if length(values) > 1
                 prev_value = values[1]
@@ -235,7 +238,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 end
             end
 
-            row_parts = vcat([search, dataset], [format_value(value) for value in values], deltas)
+            row_parts = vcat([search], [format_value(value) for value in values], deltas)
             println(buffer, "| ", join(row_parts, " | "), " |")
         end
         println(buffer, "")
