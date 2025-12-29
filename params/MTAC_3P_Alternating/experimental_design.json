@@ -1,20 +1,20 @@
 {
   "condition_keys": [
-    "Sample-A-Alternating-v2",
-    "Sample-B-Alternating-v2"
+    "A",
+    "B"
   ],
   "runs": {
-    "Sample-A_Rep1": "Sample-A-Alternating-v2",
-    "Sample-A_Rep2": "Sample-A-Alternating-v2",
-    "Sample-A_Rep3": "Sample-A-Alternating-v2",
-    "Sample-B_Rep1": "Sample-B-Alternating-v2",
-    "Sample-B_Rep2": "Sample-B-Alternating-v2",
-    "Sample-B_Rep3": "Sample-B-Alternating-v2"
+    "Sample-A_Rep1": "A",
+    "Sample-A_Rep2": "A",
+    "Sample-A_Rep3": "A",
+    "Sample-B_Rep1": "B",
+    "Sample-B_Rep2": "B",
+    "Sample-B_Rep3": "B"
   },
   "expected_ratios": [
     {
-      "numerator_condition": "Sample-A-Alternating-v2",
-      "denominator_condition": "Sample-B-Alternating-v2",
+      "numerator_condition": "A",
+      "denominator_condition": "B",
       "species_ratios": {
         "ECOLI": 3.0,
         "HUMAN": 1.0,

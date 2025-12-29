@@ -1,41 +1,41 @@
 {
   "condition_keys": [
-    "E10H50Y40",
-    "E40H50Y10",
-    "E20H50Y30",
-    "E30H50Y20",
-    "E5H50Y45",
-    "E45H50Y5"
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
   ],
   "runs": {
-    "E10H50Y40_1": "E10H50Y40",
-    "E10H50Y40_2": "E10H50Y40",
-    "E10H50Y40_3": "E10H50Y40",
-    "E10H50Y40_4": "E10H50Y40",
-    "E20H50Y30_1": "E20H50Y30",
-    "E20H50Y30_2": "E20H50Y30",
-    "E20H50Y30_3": "E20H50Y30",
-    "E20H50Y30_4": "E20H50Y30",
-    "E30H50Y20_1": "E30H50Y20",
-    "E30H50Y20_2": "E30H50Y20",
-    "E30H50Y20_3": "E30H50Y20",
-    "E30H50Y20_4": "E30H50Y20",
-    "E40H50Y10_1": "E40H50Y10",
-    "E40H50Y10_2": "E40H50Y10",
-    "E40H50Y10_3": "E40H50Y10",
-    "E40H50Y10_4": "E40H50Y10",
-    "E45H50Y5_1": "E45H50Y5",
-    "E45H50Y5_2": "E45H50Y5",
-    "E45H50Y5_3": "E45H50Y5",
-    "E45H50Y5_4": "E45H50Y5",
-    "E5H50Y45_1": "E5H50Y45",
-    "E5H50Y45_2": "E5H50Y45",
-    "E5H50Y45_4": "E5H50Y45"
+    "E10H50Y40_1": "A",
+    "E10H50Y40_2": "A",
+    "E10H50Y40_3": "A",
+    "E10H50Y40_4": "A",
+    "E20H50Y30_1": "C",
+    "E20H50Y30_2": "C",
+    "E20H50Y30_3": "C",
+    "E20H50Y30_4": "C",
+    "E30H50Y20_1": "D",
+    "E30H50Y20_2": "D",
+    "E30H50Y20_3": "D",
+    "E30H50Y20_4": "D",
+    "E40H50Y10_1": "B",
+    "E40H50Y10_2": "B",
+    "E40H50Y10_3": "B",
+    "E40H50Y10_4": "B",
+    "E45H50Y5_1": "F",
+    "E45H50Y5_2": "F",
+    "E45H50Y5_3": "F",
+    "E45H50Y5_4": "F",
+    "E5H50Y45_1": "E",
+    "E5H50Y45_2": "E",
+    "E5H50Y45_4": "E"
   },
   "expected_ratios": [
     {
-      "numerator_condition": "E40H50Y10",
-      "denominator_condition": "E10H50Y40",
+      "numerator_condition": "B",
+      "denominator_condition": "A",
       "species_ratios": {
         "ECOLI": 4.0,
         "HUMAN": 1.0,
@@ -43,8 +43,8 @@
       }
     },
     {
-      "numerator_condition": "E30H50Y20",
-      "denominator_condition": "E20H50Y30",
+      "numerator_condition": "D",
+      "denominator_condition": "C",
       "species_ratios": {
         "ECOLI": 1.5,
         "HUMAN": 1.0,
@@ -52,8 +52,8 @@
       }
     },
     {
-      "numerator_condition": "E45H50Y5",
-      "denominator_condition": "E5H50Y45",
+      "numerator_condition": "F",
+      "denominator_condition": "E",
       "species_ratios": {
         "ECOLI": 9.0,
         "HUMAN": 1.0,
