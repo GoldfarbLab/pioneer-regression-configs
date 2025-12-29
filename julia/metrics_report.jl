@@ -203,7 +203,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     for metric in ordered_metrics(collect(all_metrics))
         println(buffer, "**Metric:** ", metric)
         println(buffer, "")
-        header_parts = ["Search", "Dataset"; versions]
+        header_parts = vcat(["Search", "Dataset"], versions)
         if length(versions) > 1
             append!(
                 header_parts,
