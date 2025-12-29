@@ -142,6 +142,25 @@ function metric_group(metric::AbstractString)
     isempty(parts) ? metric : parts[1]
 end
 
+function parse_fold_change_metric(metric::AbstractString)
+    parts = split(metric, ".")
+    length(parts) < 4 && return nothing
+    parts[1] == "fold_change" || return nothing
+    group = parts[2]
+    condition = parts[3]
+    species_metric = join(parts[4:end], ".")
+    suffix = "_median_deviation"
+    species = endswith(species_metric, suffix) ? species_metric[1:end - length(suffix)] : species_metric
+    (group, condition, species)
+end
+
+format_species_label(species::AbstractString) = replace(species, "_" => " ")
+
+function format_condition_label(condition::AbstractString)
+    label = replace(condition, "_over_" => " vs ")
+    replace(label, "_" => " ")
+end
+
 function normalized_group(group::AbstractString)
     replace(group, "-" => "_")
 end
@@ -183,6 +202,106 @@ function include_metric(metric::AbstractString)
     return true
 end
 
+function collect_fold_change_entries(version_data::AbstractDict{String, Any}, versions::Vector{String})
+    entries = Dict{String, Set{Tuple{String, String, String, String}}}()
+    for version in versions
+        searches_entry = get(version_data, version, Dict{String, Any}())
+        searches_entry isa AbstractDict || continue
+        for (search, datasets) in pairs(searches_entry)
+            datasets isa AbstractDict || continue
+            for (dataset, metrics) in pairs(datasets)
+                metrics isa AbstractDict || continue
+                for metric in keys(metrics)
+                    parsed = parse_fold_change_metric(String(metric))
+                    parsed === nothing && continue
+                    group, condition, species = parsed
+                    entry_set = get!(entries, group, Set{Tuple{String, String, String, String}}())
+                    push!(entry_set, (String(search), String(dataset), species, condition))
+                end
+            end
+        end
+    end
+    entries
+end
+
+function write_fold_change_table(
+    buffer::IOBuffer,
+    group::AbstractString,
+    entries::Set{Tuple{String, String, String, String}},
+    version_data::AbstractDict{String, Any},
+    versions::Vector{String},
+)
+    isempty(entries) && return
+    println(buffer, "fold_change.", group)
+    println(buffer, "")
+
+    header_parts = vcat(["Search", "Species", "Condition"], versions)
+    if length(versions) > 1
+        append!(
+            header_parts,
+            ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+        )
+    end
+    println(buffer, "| ", join(header_parts, " | "), " |")
+    println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+
+    entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[2], entry[3], entry[4]))
+    for (search, dataset, species, condition) in entries_sorted
+        values = Vector{Any}(undef, length(versions))
+        metric_name = string(
+            "fold_change.",
+            group,
+            ".",
+            condition,
+            ".",
+            species,
+            "_median_deviation",
+        )
+        for (idx, version) in enumerate(versions)
+            searches_entry = get(version_data, version, Dict{String, Any}())
+            metrics_by_search = searches_entry isa AbstractDict ?
+                get(searches_entry, search, Dict{String, Any}()) :
+                Dict{String, Any}()
+            metrics = metrics_by_search isa AbstractDict ?
+                get(metrics_by_search, dataset, Dict{String, Any}()) :
+                Dict{String, Any}()
+            values[idx] = metrics isa AbstractDict ? get(metrics, metric_name, missing) : missing
+        end
+
+        has_value = any(value -> !(value === missing || value === nothing), values)
+        has_value || continue
+
+        deltas = String[]
+        if length(values) > 1
+            prev_value = values[1]
+            for idx in 2:length(values)
+                push!(deltas, format_delta(values[idx], prev_value))
+                prev_value = values[idx]
+            end
+        end
+
+        row_parts = vcat(
+            [search, format_species_label(species), format_condition_label(condition)],
+            [format_value(value) for value in values],
+            deltas,
+        )
+        println(buffer, "| ", join(row_parts, " | "), " |")
+    end
+    println(buffer, "")
+end
+
+function write_fold_change_tables(
+    buffer::IOBuffer,
+    fold_change_entries::Dict{String, Set{Tuple{String, String, String, String}}},
+    version_data::AbstractDict{String, Any},
+    versions::Vector{String},
+)
+    for group in ("precursors", "protein_groups")
+        entries = get(fold_change_entries, group, Set{Tuple{String, String, String, String}}())
+        write_fold_change_table(buffer, group, entries, version_data, versions)
+    end
+end
+
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
     println(buffer, "### Regression Metrics Report")
@@ -217,9 +336,25 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         end
     end
 
-    filtered_metrics = filter(include_metric, collect(all_metrics))
+    filtered_metrics = filter(
+        metric -> include_metric(metric) && parse_fold_change_metric(metric) === nothing,
+        collect(all_metrics),
+    )
+    fold_change_entries = collect_fold_change_entries(version_data, versions)
+    order_map = metric_group_order()
+    fold_change_rank = get(order_map, "fold_change", length(order_map) + 1)
+    fold_change_written = false
 
     for metric in ordered_metrics(filtered_metrics)
+        metric_rank = get(
+            order_map,
+            normalized_group(metric_group(metric)),
+            length(order_map) + 1,
+        )
+        if !fold_change_written && metric_rank > fold_change_rank
+            write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+            fold_change_written = true
+        end
         println(buffer, "**Metric:** ", metric)
         println(buffer, "")
         header_parts = vcat(["Search"], versions)
@@ -261,6 +396,9 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             println(buffer, "| ", join(row_parts, " | "), " |")
         end
         println(buffer, "")
+    end
+    if !fold_change_written
+        write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
     end
     String(take!(buffer))
 end
