@@ -154,6 +154,18 @@ function parse_fold_change_metric(metric::AbstractString)
     (group, condition, species)
 end
 
+function parse_keap1_metric(metric::AbstractString)
+    parts = split(metric, ".")
+    length(parts) < 3 && return nothing
+    parts[1] == "keap1" || return nothing
+    group = parts[2]
+    label = parts[3]
+    split_label = split(label, "_"; limit = 2)
+    gene = split_label[1]
+    run = length(split_label) == 2 ? split_label[2] : ""
+    (group, gene, run)
+end
+
 format_species_label(species::AbstractString) = replace(species, "_" => " ")
 
 function format_condition_label(condition::AbstractString)
@@ -217,6 +229,32 @@ function collect_fold_change_entries(version_data::AbstractDict{String, Any}, ve
                     group, condition, species = parsed
                     entry_set = get!(entries, group, Set{Tuple{String, String, String, String}}())
                     push!(entry_set, (String(search), String(dataset), species, condition))
+                end
+            end
+        end
+    end
+    entries
+end
+
+function collect_keap1_entries(version_data::AbstractDict{String, Any}, versions::Vector{String})
+    entries = Dict{String, Set{Tuple{String, String, String, String, String}}}()
+    for version in versions
+        searches_entry = get(version_data, version, Dict{String, Any}())
+        searches_entry isa AbstractDict || continue
+        for (search, datasets) in pairs(searches_entry)
+            datasets isa AbstractDict || continue
+            for (dataset, metrics) in pairs(datasets)
+                metrics isa AbstractDict || continue
+                for metric in keys(metrics)
+                    parsed = parse_keap1_metric(String(metric))
+                    parsed === nothing && continue
+                    group, gene, run = parsed
+                    entry_set = get!(
+                        entries,
+                        group,
+                        Set{Tuple{String, String, String, String, String}}(),
+                    )
+                    push!(entry_set, (String(search), String(dataset), gene, run, String(metric)))
                 end
             end
         end
@@ -302,6 +340,75 @@ function write_fold_change_tables(
     end
 end
 
+function write_keap1_table(
+    buffer::IOBuffer,
+    group::AbstractString,
+    entries::Set{Tuple{String, String, String, String, String}},
+    version_data::AbstractDict{String, Any},
+    versions::Vector{String},
+)
+    isempty(entries) && return
+    println(buffer, "keap1.", group)
+    println(buffer, "")
+
+    header_parts = vcat(["Search", "Gene", "Run"], versions)
+    if length(versions) > 1
+        append!(
+            header_parts,
+            ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+        )
+    end
+    println(buffer, "| ", join(header_parts, " | "), " |")
+    println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+
+    entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[3], entry[4]))
+    for (search, dataset, gene, run, metric_name) in entries_sorted
+        values = Vector{Any}(undef, length(versions))
+        for (idx, version) in enumerate(versions)
+            searches_entry = get(version_data, version, Dict{String, Any}())
+            metrics_by_search = searches_entry isa AbstractDict ?
+                get(searches_entry, search, Dict{String, Any}()) :
+                Dict{String, Any}()
+            metrics = metrics_by_search isa AbstractDict ?
+                get(metrics_by_search, dataset, Dict{String, Any}()) :
+                Dict{String, Any}()
+            values[idx] = metrics isa AbstractDict ? get(metrics, metric_name, missing) : missing
+        end
+
+        has_value = any(value -> !(value === missing || value === nothing), values)
+        has_value || continue
+
+        deltas = String[]
+        if length(values) > 1
+            prev_value = values[1]
+            for idx in 2:length(values)
+                push!(deltas, format_delta(values[idx], prev_value))
+                prev_value = values[idx]
+            end
+        end
+
+        row_parts = vcat(
+            [search, gene, run],
+            [format_value(value) for value in values],
+            deltas,
+        )
+        println(buffer, "| ", join(row_parts, " | "), " |")
+    end
+    println(buffer, "")
+end
+
+function write_keap1_tables(
+    buffer::IOBuffer,
+    keap1_entries::Dict{String, Set{Tuple{String, String, String, String, String}}},
+    version_data::AbstractDict{String, Any},
+    versions::Vector{String},
+)
+    for group in ("precursors", "protein_groups")
+        entries = get(keap1_entries, group, Set{Tuple{String, String, String, String, String}}())
+        write_keap1_table(buffer, group, entries, version_data, versions)
+    end
+end
+
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
     println(buffer, "### Regression Metrics Report")
@@ -337,13 +444,21 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     end
 
     filtered_metrics = filter(
-        metric -> include_metric(metric) && parse_fold_change_metric(metric) === nothing,
+        metric -> include_metric(metric) &&
+            parse_fold_change_metric(metric) === nothing &&
+            !startswith(metric, "keap1."),
         collect(all_metrics),
     )
     fold_change_entries = collect_fold_change_entries(version_data, versions)
+    keap1_entries = collect_keap1_entries(version_data, versions)
     order_map = metric_group_order()
     fold_change_rank = get(order_map, "fold_change", length(order_map) + 1)
-    fold_change_written = false
+    keap1_rank = get(order_map, "keap1", length(order_map) + 1)
+    special_blocks = sort(
+        [(keap1_rank, :keap1), (fold_change_rank, :fold_change)];
+        by = first,
+    )
+    special_written = Dict(:keap1 => false, :fold_change => false)
 
     for metric in ordered_metrics(filtered_metrics)
         metric_rank = get(
@@ -351,9 +466,15 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             normalized_group(metric_group(metric)),
             length(order_map) + 1,
         )
-        if !fold_change_written && metric_rank > fold_change_rank
-            write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
-            fold_change_written = true
+        for (rank, label) in special_blocks
+            if !special_written[label] && metric_rank > rank
+                if label == :keap1
+                    write_keap1_tables(buffer, keap1_entries, version_data, versions)
+                elseif label == :fold_change
+                    write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+                end
+                special_written[label] = true
+            end
         end
         println(buffer, "**Metric:** ", metric)
         println(buffer, "")
@@ -397,8 +518,15 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         end
         println(buffer, "")
     end
-    if !fold_change_written
-        write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+    for (rank, label) in special_blocks
+        if !special_written[label]
+            if label == :keap1
+                write_keap1_tables(buffer, keap1_entries, version_data, versions)
+            elseif label == :fold_change
+                write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+            end
+            special_written[label] = true
+        end
     end
     String(take!(buffer))
 end
