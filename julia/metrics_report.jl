@@ -173,82 +173,72 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     println(buffer, "- Versions: ", join(versions, ", "))
     println(buffer, "")
 
-    searches = Set{String}()
+    dataset_entries = Set{Tuple{String, String}}()
     for version in versions
         searches_entry = get(version_data, version, Dict{String, Any}())
         if searches_entry isa AbstractDict
-            union!(searches, keys(searches_entry))
+            for (search, datasets) in pairs(searches_entry)
+                datasets isa AbstractDict || continue
+                for dataset in keys(datasets)
+                    push!(dataset_entries, (String(search), String(dataset)))
+                end
+            end
         end
     end
-    searches_sorted = sort(collect(searches))
-    for search in searches_sorted
-        println(buffer, "#### Search: ", search)
+    entries_sorted = sort(collect(dataset_entries); by = entry -> (entry[1], entry[2]))
+
+    all_metrics = Set{String}()
+    for version in versions
+        searches_entry = get(version_data, version, Dict{String, Any}())
+        searches_entry isa AbstractDict || continue
+        for (search, datasets) in pairs(searches_entry)
+            datasets isa AbstractDict || continue
+            for dataset in keys(datasets)
+                metrics = get(datasets, dataset, Dict{String, Any}())
+                metrics isa AbstractDict && union!(all_metrics, keys(metrics))
+            end
+        end
+    end
+
+    for metric in ordered_metrics(collect(all_metrics))
+        println(buffer, "**Metric:** ", metric)
         println(buffer, "")
-
-        datasets = Set{String}()
-        for version in versions
-            searches_entry = get(version_data, version, Dict{String, Any}())
-            metrics_by_search = searches_entry isa AbstractDict ?
-                get(searches_entry, search, Dict{String, Any}()) :
-                Dict{String, Any}()
-            metrics_by_search isa AbstractDict && union!(datasets, keys(metrics_by_search))
+        header_parts = ["Search", "Dataset"; versions]
+        if length(versions) > 1
+            append!(
+                header_parts,
+                ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+            )
         end
-        datasets_sorted = sort(collect(datasets))
+        println(buffer, "| ", join(header_parts, " | "), " |")
+        println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
 
-        all_metrics = Set{String}()
-        for version in versions
-            searches_entry = get(version_data, version, Dict{String, Any}())
-            metrics_by_search = searches_entry isa AbstractDict ?
-                get(searches_entry, search, Dict{String, Any}()) :
-                Dict{String, Any}()
-            if metrics_by_search isa AbstractDict
-                for dataset in datasets_sorted
-                    metrics = get(metrics_by_search, dataset, Dict{String, Any}())
-                    metrics isa AbstractDict && union!(all_metrics, keys(metrics))
+        for (search, dataset) in entries_sorted
+            values = Vector{Any}(undef, length(versions))
+            for (idx, version) in enumerate(versions)
+                searches_entry = get(version_data, version, Dict{String, Any}())
+                metrics_by_search = searches_entry isa AbstractDict ?
+                    get(searches_entry, search, Dict{String, Any}()) :
+                    Dict{String, Any}()
+                metrics = metrics_by_search isa AbstractDict ?
+                    get(metrics_by_search, dataset, Dict{String, Any}()) :
+                    Dict{String, Any}()
+                values[idx] = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
+            end
+
+            deltas = String[]
+            if length(values) > 1
+                prev_value = values[1]
+                for idx in 2:length(values)
+                    push!(deltas, format_delta(values[idx], prev_value))
+                    prev_value = values[idx]
                 end
             end
+
+            row_parts = [search, dataset; [format_value(value) for value in values]; deltas]
+            println(buffer, "| ", join(row_parts, " | "), " |")
         end
-
-        for metric in ordered_metrics(collect(all_metrics))
-            println(buffer, "**Metric:** ", metric)
-            println(buffer, "")
-            header_parts = ["Dataset"; versions]
-            if length(versions) > 1
-                append!(
-                    header_parts,
-                    ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
-                )
-            end
-            println(buffer, "| ", join(header_parts, " | "), " |")
-            println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
-
-            for dataset in datasets_sorted
-                values = Vector{Any}(undef, length(versions))
-                for (idx, version) in enumerate(versions)
-                    searches_entry = get(version_data, version, Dict{String, Any}())
-                    metrics_by_search = searches_entry isa AbstractDict ?
-                        get(searches_entry, search, Dict{String, Any}()) :
-                        Dict{String, Any}()
-                    metrics = metrics_by_search isa AbstractDict ?
-                        get(metrics_by_search, dataset, Dict{String, Any}()) :
-                        Dict{String, Any}()
-                    values[idx] = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
-                end
-
-                deltas = String[]
-                if length(values) > 1
-                    prev_value = values[1]
-                    for idx in 2:length(values)
-                        push!(deltas, format_delta(values[idx], prev_value))
-                        prev_value = values[idx]
-                    end
-                end
-
-                row_parts = [dataset; [format_value(value) for value in values]; deltas]
-                println(buffer, "| ", join(row_parts, " | "), " |")
-            end
-            println(buffer, "")
-        end
+        println(buffer, "")
     end
     String(take!(buffer))
 end
