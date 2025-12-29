@@ -137,6 +137,19 @@ function format_delta(current, previous)
     NA
 end
 
+function format_percent_delta(current, previous)
+    if current === missing || previous === missing || current === nothing || previous === nothing
+        return NA
+    elseif current isa Number && previous isa Number
+        prev_value = Float64(previous)
+        prev_value == 0 && return NA
+        percent = (Float64(current) - prev_value) / prev_value * 100
+        formatted = format_number(abs(percent)) * "%"
+        return percent >= 0 ? "+" * formatted : "-" * formatted
+    end
+    NA
+end
+
 function metric_group(metric::AbstractString)
     parts = split(metric, ".")
     isempty(parts) ? metric : parts[1]
@@ -612,6 +625,13 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 header_parts,
                 ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
             )
+            group = normalized_group(metric_group(metric))
+            if group in ("identification", "runtime")
+                append!(
+                    header_parts,
+                    ["% " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+                )
+            end
         end
         println(buffer, "| ", join(header_parts, " | "), " |")
         println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
@@ -641,7 +661,22 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 end
             end
 
-            row_parts = vcat([search], [format_value(value) for value in values], deltas)
+            percent_deltas = String[]
+            group = normalized_group(metric_group(metric))
+            if length(values) > 1 && group in ("identification", "runtime")
+                prev_value = values[1]
+                for idx in 2:length(values)
+                    push!(percent_deltas, format_percent_delta(values[idx], prev_value))
+                    prev_value = values[idx]
+                end
+            end
+
+            row_parts = vcat(
+                [search],
+                [format_value(value) for value in values],
+                deltas,
+                percent_deltas,
+            )
             println(buffer, "| ", join(row_parts, " | "), " |")
         end
         println(buffer, "")
