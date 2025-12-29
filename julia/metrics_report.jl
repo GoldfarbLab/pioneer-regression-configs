@@ -3,6 +3,8 @@
 using JSON
 using Printf
 
+const MAX_FDR_PLOTS = 4
+
 const NA = ""
 
 function parse_version_label(label::AbstractString)
@@ -106,6 +108,120 @@ function collect_metrics(root::AbstractString)
         search_entry[dataset] = flat
     end
     results
+end
+
+function slugify_label(label::AbstractString)
+    replace(label, r"[^A-Za-z0-9_-]" => "_")
+end
+
+function html_escape(text::AbstractString)
+    escaped = replace(text, "&" => "&amp;")
+    escaped = replace(escaped, "<" => "&lt;")
+    escaped = replace(escaped, ">" => "&gt;")
+    escaped = replace(escaped, "\"" => "&quot;")
+    replace(escaped, "'" => "&#39;")
+end
+
+function fdr_plot_paths(metrics_dir::AbstractString)
+    plots = String[]
+    if isdir(metrics_dir)
+        for entry in readdir(metrics_dir; join = true)
+            if isfile(entry) && endswith(lowercase(entry), ".png")
+                push!(plots, entry)
+            end
+        end
+    end
+
+    entrapment_dir = joinpath(metrics_dir, "entrapment_analysis")
+    if isdir(entrapment_dir)
+        for entry in readdir(entrapment_dir; join = true)
+            if isfile(entry) && endswith(lowercase(entry), ".png")
+                push!(plots, entry)
+            end
+        end
+    end
+
+    unique!(plots)
+    sort!(plots)
+    plots
+end
+
+function collect_fdr_plots(root::AbstractString)
+    plots_by_search = Dict{String, Dict{String, Vector{String}}}()
+    for path in metrics_files(root)
+        dataset, search = parse_dataset_search(path, root)
+        isempty(search) && continue
+        plots = fdr_plot_paths(dirname(path))
+        isempty(plots) && continue
+        search_entry = get!(plots_by_search, search, Dict{String, Vector{String}}())
+        search_entry[dataset] = plots
+    end
+    plots_by_search
+end
+
+function copy_plot(path::AbstractString, dest_dir::AbstractString)
+    mkpath(dest_dir)
+    dest_path = joinpath(dest_dir, basename(path))
+    cp(path, dest_path; force = true)
+    dest_path
+end
+
+function build_html_report(plots_by_search::Dict{String, Dict{String, Vector{String}}}, output_path::AbstractString)
+    output_dir = dirname(output_path)
+    plot_root = joinpath(output_dir, "fdr_plots")
+    mkpath(output_dir)
+    mkpath(plot_root)
+
+    buffer = IOBuffer()
+    println(buffer, "<!DOCTYPE html>")
+    println(buffer, "<html lang=\"en\">")
+    println(buffer, "<head>")
+    println(buffer, "<meta charset=\"UTF-8\">")
+    println(buffer, "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
+    println(buffer, "<title>Regression Metrics eFDR Plots</title>")
+    println(buffer, "<style>")
+    println(buffer, "body { font-family: Arial, sans-serif; margin: 24px; }")
+    println(buffer, "h1 { margin-bottom: 8px; }")
+    println(buffer, ".search-block { margin-bottom: 32px; }")
+    println(buffer, ".dataset-block { margin-bottom: 20px; }")
+    println(buffer, ".plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }")
+    println(buffer, ".plot-card { border: 1px solid #ddd; padding: 8px; border-radius: 6px; }")
+    println(buffer, ".plot-card img { width: 100%; height: auto; display: block; }")
+    println(buffer, ".plot-caption { font-size: 12px; margin-top: 6px; color: #555; word-break: break-all; }")
+    println(buffer, "</style>")
+    println(buffer, "</head>")
+    println(buffer, "<body>")
+    println(buffer, "<h1>Regression Metrics eFDR Plots</h1>")
+    println(buffer, "<p>Four-panel eFDR plot grids are organized per search.</p>")
+
+    for search in sort(collect(keys(plots_by_search)))
+        println(buffer, "<div class=\"search-block\">")
+        println(buffer, "<h2>", html_escape(search), "</h2>")
+        datasets = get(plots_by_search, search, Dict{String, Vector{String}}())
+        for dataset in sort(collect(keys(datasets)))
+            plots = datasets[dataset]
+            isempty(plots) && continue
+            println(buffer, "<div class=\"dataset-block\">")
+            println(buffer, "<h3>", html_escape(dataset), "</h3>")
+            println(buffer, "<div class=\"plot-grid\">")
+            for plot_path in plots[1:min(length(plots), MAX_FDR_PLOTS)]
+                dest_dir = joinpath(plot_root, slugify_label(search), slugify_label(dataset))
+                copied = copy_plot(plot_path, dest_dir)
+                rel_path = relpath(copied, output_dir)
+                println(buffer, "<div class=\"plot-card\">")
+                println(buffer, "<img src=\"", html_escape(rel_path), "\" alt=\"", html_escape(basename(plot_path)), "\">")
+                println(buffer, "<div class=\"plot-caption\">", html_escape(basename(plot_path)), "</div>")
+                println(buffer, "</div>")
+            end
+            println(buffer, "</div>")
+            println(buffer, "</div>")
+        end
+        println(buffer, "</div>")
+    end
+
+    println(buffer, "</body>")
+    println(buffer, "</html>")
+    String(take!(buffer))
 end
 
 function format_number(value::Float64)
@@ -701,6 +817,8 @@ function main()
     develop_root = get(ENV, "PIONEER_METRICS_DEVELOP_ROOT", "")
     current_root = get(ENV, "PIONEER_METRICS_CURRENT_ROOT", "")
     output_path = get(ENV, "PIONEER_REPORT_OUTPUT", "")
+    html_output_path = get(ENV, "PIONEER_HTML_REPORT_OUTPUT", "")
+    plots_root = get(ENV, "PIONEER_FDR_PLOTS_ROOT", current_root)
 
     isempty(release_root) && error("PIONEER_METRICS_RELEASE_ROOT not set")
     isempty(develop_root) && error("PIONEER_METRICS_DEVELOP_ROOT not set")
@@ -729,6 +847,21 @@ function main()
     isdir(output_dir) || mkpath(output_dir)
     open(output_path, "w") do io
         write(io, report)
+    end
+
+    if isempty(html_output_path)
+        base, _ = splitext(output_path)
+        html_output_path = base * ".html"
+    end
+
+    if isdir(plots_root)
+        plots_by_search = collect_fdr_plots(plots_root)
+        html_report = build_html_report(plots_by_search, html_output_path)
+        open(html_output_path, "w") do io
+            write(io, html_report)
+        end
+    else
+        @warn "Plots root not found; skipping HTML report" plots_root=plots_root
     end
 end
 
