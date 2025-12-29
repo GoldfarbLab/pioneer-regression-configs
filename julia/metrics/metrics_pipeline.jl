@@ -139,10 +139,46 @@ function fold_change_metrics_block(
         return nothing
     end
 
+    function split_fold_change_metrics(metrics::AbstractDict)
+        error_metrics = Dict{String, Any}()
+        variance_metrics = Dict{String, Any}()
+        for (pair_label, pair_metrics) in pairs(metrics)
+            pair_metrics isa AbstractDict || continue
+            error_pair = Dict{String, Any}()
+            variance_pair = Dict{String, Any}()
+            for (metric_label, value) in pairs(pair_metrics)
+                metric_label_str = String(metric_label)
+                if endswith(metric_label_str, "_median_deviation")
+                    error_pair[metric_label_str] = value
+                elseif endswith(metric_label_str, "_fc_variance")
+                    variance_pair[metric_label_str] = value
+                end
+            end
+            !isempty(error_pair) && (error_metrics[String(pair_label)] = error_pair)
+            !isempty(variance_pair) && (variance_metrics[String(pair_label)] = variance_pair)
+        end
+        (isempty(error_metrics) ? nothing : error_metrics, isempty(variance_metrics) ? nothing : variance_metrics)
+    end
+
+    error_metrics_block = Dict{String, Any}()
+    variance_metrics_block = Dict{String, Any}()
+
+    if precursor_fold_changes !== nothing
+        precursor_error, precursor_variance = split_fold_change_metrics(precursor_fold_changes)
+        precursor_error !== nothing && (error_metrics_block["precursors"] = precursor_error)
+        precursor_variance !== nothing && (variance_metrics_block["precursors"] = precursor_variance)
+    end
+
+    if protein_fold_changes !== nothing
+        protein_error, protein_variance = split_fold_change_metrics(protein_fold_changes)
+        protein_error !== nothing && (error_metrics_block["protein_groups"] = protein_error)
+        protein_variance !== nothing && (variance_metrics_block["protein_groups"] = protein_variance)
+    end
+
     metrics = Dict{String, Any}()
-    precursor_fold_changes !== nothing && (metrics["precursors"] = precursor_fold_changes)
-    protein_fold_changes !== nothing && (metrics["protein_groups"] = protein_fold_changes)
-    metrics
+    !isempty(error_metrics_block) && (metrics["error"] = error_metrics_block)
+    !isempty(variance_metrics_block) && (metrics["variance"] = variance_metrics_block)
+    isempty(metrics) ? nothing : metrics
 end
 
 function compute_dataset_metrics(
