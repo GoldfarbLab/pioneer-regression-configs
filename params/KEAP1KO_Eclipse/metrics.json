@@ -1,4 +1,4 @@
 {
     "search": ["runtime", "identification", "KEAP1"],
-    "search_entrap": ["runtime", "eFDR"]
+    "search_entrap": ["eFDR"]
 }
