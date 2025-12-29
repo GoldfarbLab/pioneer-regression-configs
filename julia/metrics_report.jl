@@ -235,7 +235,7 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 end
             end
 
-            row_parts = [search, dataset; [format_value(value) for value in values]; deltas]
+            row_parts = vcat([search, dataset], [format_value(value) for value in values], deltas)
             println(buffer, "| ", join(row_parts, " | "), " |")
         end
         println(buffer, "")
