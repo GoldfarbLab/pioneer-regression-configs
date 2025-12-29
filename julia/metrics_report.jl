@@ -144,11 +144,12 @@ end
 
 function parse_fold_change_metric(metric::AbstractString)
     parts = split(metric, ".")
-    length(parts) < 4 && return nothing
+    length(parts) < 5 && return nothing
     parts[1] == "fold_change" || return nothing
-    group = parts[2]
-    condition = parts[3]
-    species_metric = join(parts[4:end], ".")
+    parts[2] == "error" || return nothing
+    group = parts[3]
+    condition = parts[4]
+    species_metric = join(parts[5:end], ".")
     suffix = "_median_deviation"
     endswith(species_metric, suffix) || return nothing
     species = species_metric[1:end - length(suffix)]
@@ -157,11 +158,12 @@ end
 
 function parse_fold_change_fc_variance_metric(metric::AbstractString)
     parts = split(metric, ".")
-    length(parts) < 4 && return nothing
+    length(parts) < 5 && return nothing
     parts[1] == "fold_change" || return nothing
-    group = parts[2]
-    condition = parts[3]
-    species_metric = join(parts[4:end], ".")
+    parts[2] == "variance" || return nothing
+    group = parts[3]
+    condition = parts[4]
+    species_metric = join(parts[5:end], ".")
     suffix = "_fc_variance"
     endswith(species_metric, suffix) || return nothing
     species = species_metric[1:end - length(suffix)]
@@ -313,7 +315,7 @@ function write_fold_change_table(
     versions::Vector{String},
 )
     isempty(entries) && return
-    println(buffer, "fold_change.", group)
+    println(buffer, "fold_change.error.", group)
     println(buffer, "")
 
     header_parts = vcat(["Search", "Species", "Condition"], versions)
@@ -330,7 +332,7 @@ function write_fold_change_table(
     for (search, dataset, species, condition) in entries_sorted
         values = Vector{Any}(undef, length(versions))
         metric_name = string(
-            "fold_change.",
+            "fold_change.error.",
             group,
             ".",
             condition,
@@ -391,7 +393,7 @@ function write_fold_change_fc_variance_table(
     versions::Vector{String},
 )
     isempty(entries) && return
-    println(buffer, "fold_change.FC-variance.", group)
+    println(buffer, "fold_change.variance.", group)
     println(buffer, "")
 
     header_parts = vcat(["Search", "Species", "Condition"], versions)
@@ -408,7 +410,7 @@ function write_fold_change_fc_variance_table(
     for (search, dataset, species, condition) in entries_sorted
         values = Vector{Any}(undef, length(versions))
         metric_name = string(
-            "fold_change.",
+            "fold_change.variance.",
             group,
             ".",
             condition,
