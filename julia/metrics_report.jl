@@ -365,7 +365,7 @@ function build_html_report(
     println(buffer, "        const text = row.textContent.toLowerCase();")
     println(buffer, "        const dataset = (row.dataset.dataset || \"\").toLowerCase();")
     println(buffer, "        const search = (row.dataset.search || \"\").toLowerCase();")
-    println(buffer, "        const haystack = `\\${text} \\${dataset} \\${search}`;")
+    println(buffer, "        const haystack = `\${text} \${dataset} \${search}`;")
     println(buffer, "        row.style.display = !query || haystack.includes(query) ? \"\" : \"none\";")
     println(buffer, "      });")
     println(buffer, "    });")
