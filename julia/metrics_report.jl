@@ -169,7 +169,7 @@ end
 function build_html_report(
     plots_by_search::Dict{String, Dict{String, Vector{String}}},
     output_path::AbstractString,
-    markdown_report::AbstractString,
+    metrics_report::AbstractString,
 )
     output_dir = dirname(output_path)
     plot_root = joinpath(output_dir, "fdr_plots")
@@ -192,16 +192,19 @@ function build_html_report(
     println(buffer, ".plot-card { border: 1px solid #ddd; padding: 8px; border-radius: 6px; }")
     println(buffer, ".plot-card img { width: 100%; height: auto; display: block; }")
     println(buffer, ".plot-caption { font-size: 12px; margin-top: 6px; color: #555; word-break: break-all; }")
-    println(buffer, ".markdown-report { margin-bottom: 32px; }")
-    println(buffer, ".markdown-report pre { white-space: pre-wrap; background: #f8f8f8; padding: 12px; border-radius: 6px; border: 1px solid #eee; }")
+    println(buffer, ".metrics-report { margin-bottom: 32px; }")
+    println(buffer, ".metric-block { margin-bottom: 24px; }")
+    println(buffer, ".metrics-table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }")
+    println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
+    println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
+    println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
     println(buffer, "</style>")
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<h1>Regression Metrics eFDR Plots</h1>")
     println(buffer, "<p>Four-panel eFDR plot grids are organized per dataset.</p>")
-    println(buffer, "<div class=\"markdown-report\">")
-    println(buffer, "<h2>Regression Metrics Report</h2>")
-    println(buffer, "<pre>", html_escape(markdown_report), "</pre>")
+    println(buffer, "<div class=\"metrics-report\">")
+    println(buffer, metrics_report)
     println(buffer, "</div>")
 
     for search in sort(collect(keys(plots_by_search)))
@@ -228,6 +231,33 @@ function build_html_report(
         println(buffer, "</div>")
     end
 
+    println(buffer, "</body>")
+    println(buffer, "</html>")
+    String(take!(buffer))
+end
+
+function build_metrics_report_page(metrics_report::AbstractString)
+    buffer = IOBuffer()
+    println(buffer, "<!DOCTYPE html>")
+    println(buffer, "<html lang=\"en\">")
+    println(buffer, "<head>")
+    println(buffer, "<meta charset=\"UTF-8\">")
+    println(buffer, "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
+    println(buffer, "<title>Regression Metrics Report</title>")
+    println(buffer, "<style>")
+    println(buffer, "body { font-family: Arial, sans-serif; margin: 24px; }")
+    println(buffer, ".metrics-report { margin-bottom: 32px; }")
+    println(buffer, ".metric-block { margin-bottom: 24px; }")
+    println(buffer, ".metrics-table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }")
+    println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
+    println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
+    println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
+    println(buffer, "</style>")
+    println(buffer, "</head>")
+    println(buffer, "<body>")
+    println(buffer, "<div class=\"metrics-report\">")
+    println(buffer, metrics_report)
+    println(buffer, "</div>")
     println(buffer, "</body>")
     println(buffer, "</html>")
     String(take!(buffer))
@@ -453,8 +483,8 @@ function write_fold_change_table(
     versions::Vector{String},
 )
     isempty(entries) && return
-    println(buffer, "fold_change.error.", group)
-    println(buffer, "")
+    println(buffer, "<div class=\"metric-block\">")
+    println(buffer, "<h3>", html_escape("fold_change.error." * group), "</h3>")
 
     header_parts = vcat(["Search", "Species", "Condition"], versions)
     if length(versions) > 1
@@ -463,8 +493,13 @@ function write_fold_change_table(
             ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
         )
     end
-    println(buffer, "| ", join(header_parts, " | "), " |")
-    println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+    println(buffer, "<table class=\"metrics-table\">")
+    println(buffer, "<thead><tr>")
+    for header in header_parts
+        println(buffer, "<th>", html_escape(header), "</th>")
+    end
+    println(buffer, "</tr></thead>")
+    println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[2], entry[3], entry[4]))
     for (search, dataset, species, condition) in entries_sorted
@@ -506,9 +541,14 @@ function write_fold_change_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "| ", join(row_parts, " | "), " |")
+        println(buffer, "<tr>")
+        for value in row_parts
+            println(buffer, "<td>", html_escape(value), "</td>")
+        end
+        println(buffer, "</tr>")
     end
-    println(buffer, "")
+    println(buffer, "</tbody></table>")
+    println(buffer, "</div>")
 end
 
 function write_fold_change_tables(
@@ -531,8 +571,8 @@ function write_fold_change_fc_variance_table(
     versions::Vector{String},
 )
     isempty(entries) && return
-    println(buffer, "fold_change.variance.", group)
-    println(buffer, "")
+    println(buffer, "<div class=\"metric-block\">")
+    println(buffer, "<h3>", html_escape("fold_change.variance." * group), "</h3>")
 
     header_parts = vcat(["Search", "Species", "Condition"], versions)
     if length(versions) > 1
@@ -541,8 +581,13 @@ function write_fold_change_fc_variance_table(
             ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
         )
     end
-    println(buffer, "| ", join(header_parts, " | "), " |")
-    println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+    println(buffer, "<table class=\"metrics-table\">")
+    println(buffer, "<thead><tr>")
+    for header in header_parts
+        println(buffer, "<th>", html_escape(header), "</th>")
+    end
+    println(buffer, "</tr></thead>")
+    println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[2], entry[3], entry[4]))
     for (search, dataset, species, condition) in entries_sorted
@@ -584,9 +629,14 @@ function write_fold_change_fc_variance_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "| ", join(row_parts, " | "), " |")
+        println(buffer, "<tr>")
+        for value in row_parts
+            println(buffer, "<td>", html_escape(value), "</td>")
+        end
+        println(buffer, "</tr>")
     end
-    println(buffer, "")
+    println(buffer, "</tbody></table>")
+    println(buffer, "</div>")
 end
 
 function write_fold_change_fc_variance_tables(
@@ -609,8 +659,8 @@ function write_keap1_table(
     versions::Vector{String},
 )
     isempty(entries) && return
-    println(buffer, "keap1.", group)
-    println(buffer, "")
+    println(buffer, "<div class=\"metric-block\">")
+    println(buffer, "<h3>", html_escape("keap1." * group), "</h3>")
 
     header_parts = vcat(["Search", "Gene", "Run"], versions)
     if length(versions) > 1
@@ -619,8 +669,13 @@ function write_keap1_table(
             ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
         )
     end
-    println(buffer, "| ", join(header_parts, " | "), " |")
-    println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+    println(buffer, "<table class=\"metrics-table\">")
+    println(buffer, "<thead><tr>")
+    for header in header_parts
+        println(buffer, "<th>", html_escape(header), "</th>")
+    end
+    println(buffer, "</tr></thead>")
+    println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[3], entry[4]))
     for (search, dataset, gene, run, metric_name) in entries_sorted
@@ -653,9 +708,14 @@ function write_keap1_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "| ", join(row_parts, " | "), " |")
+        println(buffer, "<tr>")
+        for value in row_parts
+            println(buffer, "<td>", html_escape(value), "</td>")
+        end
+        println(buffer, "</tr>")
     end
-    println(buffer, "")
+    println(buffer, "</tbody></table>")
+    println(buffer, "</div>")
 end
 
 function write_keap1_tables(
@@ -672,10 +732,15 @@ end
 
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
-    println(buffer, "### Regression Metrics Report")
-    println(buffer, "")
-    println(buffer, "- Versions: ", join(versions, ", "))
-    println(buffer, "")
+    println(buffer, "<div class=\"metric-block\">")
+    println(buffer, "<h2>Regression Metrics Report</h2>")
+    println(
+        buffer,
+        "<p><strong>Versions:</strong> ",
+        html_escape(join(versions, ", ")),
+        "</p>",
+    )
+    println(buffer, "</div>")
 
     dataset_entries = Set{Tuple{String, String}}()
     for version in versions
@@ -742,8 +807,8 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 special_written[label] = true
             end
         end
-        println(buffer, "**Metric:** ", metric)
-        println(buffer, "")
+        println(buffer, "<div class=\"metric-block\">")
+        println(buffer, "<h3>Metric: ", html_escape(metric), "</h3>")
         header_parts = vcat(["Search"], versions)
         if length(versions) > 1
             append!(
@@ -758,8 +823,13 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 )
             end
         end
-        println(buffer, "| ", join(header_parts, " | "), " |")
-        println(buffer, "| ", join(fill("---", length(header_parts)), " | "), " |")
+        println(buffer, "<table class=\"metrics-table\">")
+        println(buffer, "<thead><tr>")
+        for header in header_parts
+            println(buffer, "<th>", html_escape(header), "</th>")
+        end
+        println(buffer, "</tr></thead>")
+        println(buffer, "<tbody>")
 
         for (search, dataset) in entries_sorted
             values = Vector{Any}(undef, length(versions))
@@ -802,9 +872,14 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 deltas,
                 percent_deltas,
             )
-            println(buffer, "| ", join(row_parts, " | "), " |")
+            println(buffer, "<tr>")
+            for value in row_parts
+                println(buffer, "<td>", html_escape(value), "</td>")
+            end
+            println(buffer, "</tr>")
         end
-        println(buffer, "")
+        println(buffer, "</tbody></table>")
+        println(buffer, "</div>")
     end
     for (rank, label) in special_blocks
         if !special_written[label]
@@ -851,10 +926,15 @@ function main()
     end
 
     report = build_report(version_data, versions)
+    report_page = build_metrics_report_page(report)
 
     if isempty(html_output_path)
         base, _ = splitext(output_path)
         html_output_path = base * ".html"
+    end
+
+    open(output_path, "w") do io
+        write(io, report_page)
     end
 
     if isdir(plots_root)
