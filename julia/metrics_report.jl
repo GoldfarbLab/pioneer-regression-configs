@@ -166,7 +166,11 @@ function copy_plot(path::AbstractString, dest_dir::AbstractString)
     dest_path
 end
 
-function build_html_report(plots_by_search::Dict{String, Dict{String, Vector{String}}}, output_path::AbstractString)
+function build_html_report(
+    plots_by_search::Dict{String, Dict{String, Vector{String}}},
+    output_path::AbstractString,
+    markdown_report::AbstractString,
+)
     output_dir = dirname(output_path)
     plot_root = joinpath(output_dir, "fdr_plots")
     mkpath(output_dir)
@@ -188,15 +192,20 @@ function build_html_report(plots_by_search::Dict{String, Dict{String, Vector{Str
     println(buffer, ".plot-card { border: 1px solid #ddd; padding: 8px; border-radius: 6px; }")
     println(buffer, ".plot-card img { width: 100%; height: auto; display: block; }")
     println(buffer, ".plot-caption { font-size: 12px; margin-top: 6px; color: #555; word-break: break-all; }")
+    println(buffer, ".markdown-report { margin-bottom: 32px; }")
+    println(buffer, ".markdown-report pre { white-space: pre-wrap; background: #f8f8f8; padding: 12px; border-radius: 6px; border: 1px solid #eee; }")
     println(buffer, "</style>")
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<h1>Regression Metrics eFDR Plots</h1>")
-    println(buffer, "<p>Four-panel eFDR plot grids are organized per search.</p>")
+    println(buffer, "<p>Four-panel eFDR plot grids are organized per dataset.</p>")
+    println(buffer, "<div class=\"markdown-report\">")
+    println(buffer, "<h2>Regression Metrics Report</h2>")
+    println(buffer, "<pre>", html_escape(markdown_report), "</pre>")
+    println(buffer, "</div>")
 
     for search in sort(collect(keys(plots_by_search)))
         println(buffer, "<div class=\"search-block\">")
-        println(buffer, "<h2>", html_escape(search), "</h2>")
         datasets = get(plots_by_search, search, Dict{String, Vector{String}}())
         for dataset in sort(collect(keys(datasets)))
             plots = datasets[dataset]
@@ -843,12 +852,6 @@ function main()
 
     report = build_report(version_data, versions)
 
-    output_dir = dirname(output_path)
-    isdir(output_dir) || mkpath(output_dir)
-    open(output_path, "w") do io
-        write(io, report)
-    end
-
     if isempty(html_output_path)
         base, _ = splitext(output_path)
         html_output_path = base * ".html"
@@ -856,7 +859,7 @@ function main()
 
     if isdir(plots_root)
         plots_by_search = collect_fdr_plots(plots_root)
-        html_report = build_html_report(plots_by_search, html_output_path)
+        html_report = build_html_report(plots_by_search, html_output_path, report)
         open(html_output_path, "w") do io
             write(io, html_report)
         end
