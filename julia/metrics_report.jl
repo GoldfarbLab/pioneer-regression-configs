@@ -192,11 +192,10 @@ function build_html_report(plots_by_search::Dict{String, Dict{String, Vector{Str
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<h1>Regression Metrics eFDR Plots</h1>")
-    println(buffer, "<p>Four-panel eFDR plot grids are organized per search.</p>")
+    println(buffer, "<p>Four-panel eFDR plot grids are organized per dataset.</p>")
 
     for search in sort(collect(keys(plots_by_search)))
         println(buffer, "<div class=\"search-block\">")
-        println(buffer, "<h2>", html_escape(search), "</h2>")
         datasets = get(plots_by_search, search, Dict{String, Vector{String}}())
         for dataset in sort(collect(keys(datasets)))
             plots = datasets[dataset]
