@@ -1,0 +1,100 @@
+{
+  "datasets": {
+    "APMS_Astral": {
+      "tags": []
+    },
+    "EWZ_2P_MBR_Exploris": {
+      "tags": []
+    },
+    "KEAP1KO_Eclipse": {
+      "tags": []
+    },
+    "MTAC_3P_Alternating": {
+      "tags": []
+    },
+    "MTAC_3P_Standard": {
+      "tags": []
+    },
+    "MTAC_Yeast_Alternating_3min": {
+      "tags": []
+    },
+    "MTAC_Yeast_Alternating_5min": {
+      "tags": []
+    },
+    "MTAC_Yeast_Standard_3min": {
+      "tags": []
+    },
+    "MTAC_Yeast_Standard_5min": {
+      "tags": []
+    },
+    "Olsen_Astral_3P": {
+      "tags": []
+    },
+    "Olsen_Exploris_3P": {
+      "tags": []
+    },
+    "SCIEX_3P": {
+      "tags": []
+    },
+    "SCP_Astral_1000pg_12ms": {
+      "tags": []
+    },
+    "SCP_Astral_1000pg_24ms": {
+      "tags": []
+    },
+    "SCP_Astral_1000pg_3ms": {
+      "tags": []
+    },
+    "SCP_Astral_1000pg_6ms": {
+      "tags": []
+    },
+    "SCP_Astral_10ng_12ms": {
+      "tags": []
+    },
+    "SCP_Astral_10ng_24ms": {
+      "tags": []
+    },
+    "SCP_Astral_10ng_3ms": {
+      "tags": []
+    },
+    "SCP_Astral_10ng_6ms": {
+      "tags": []
+    },
+    "SCP_Astral_250pg_12ms": {
+      "tags": []
+    },
+    "SCP_Astral_250pg_24ms": {
+      "tags": []
+    },
+    "SCP_Astral_250pg_3ms": {
+      "tags": []
+    },
+    "SCP_Astral_250pg_6ms": {
+      "tags": []
+    },
+    "SCP_Astral_500pg_12ms": {
+      "tags": []
+    },
+    "SCP_Astral_500pg_24ms": {
+      "tags": []
+    },
+    "SCP_Astral_500pg_3ms": {
+      "tags": []
+    },
+    "SCP_Astral_500pg_6ms": {
+      "tags": []
+    },
+    "SCP_Astral_MBR": {
+      "tags": []
+    },
+    "Seer_Astral_45": {
+      "tags": []
+    },
+    "Seer_Astral_single": {
+      "tags": []
+    },
+    "YEAST_KO_Astral": {
+      "tags": []
+    }
+  }
+}
