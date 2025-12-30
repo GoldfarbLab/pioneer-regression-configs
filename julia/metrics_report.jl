@@ -934,22 +934,24 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         println(buffer, "<h3>Metric: ", html_escape(metric), "</h3>")
         header_parts = vcat(["Search"], versions)
         if length(versions) > 1
+            current_version = versions[end]
+            previous_versions = versions[1:(end - 1)]
             append!(
                 header_parts,
-                ["Δ " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
+                ["Δ " * current_version * " vs " * version for version in previous_versions],
             )
             group = normalized_group(metric_group(metric))
             if group in ("identification", "runtime")
                 append!(
                     header_parts,
-                    ["% " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
+                    ["% " * current_version * " vs " * version for version in previous_versions],
                 )
             end
         end
         initial_sort = ""
         if length(versions) > 1
             base_columns = 1
-            delta_index = base_columns + 2 * length(versions) - 2
+            delta_index = base_columns + length(versions) + 1
             initial_sort = string(delta_index)
         end
         println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
@@ -978,20 +980,18 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
 
             deltas = String[]
             if length(values) > 1
-                prev_value = values[1]
-                for idx in 2:length(values)
-                    push!(deltas, format_delta(values[idx], prev_value))
-                    prev_value = values[idx]
+                current_value = values[end]
+                for idx in 1:(length(values) - 1)
+                    push!(deltas, format_delta(current_value, values[idx]))
                 end
             end
 
             percent_deltas = String[]
             group = normalized_group(metric_group(metric))
             if length(values) > 1 && group in ("identification", "runtime")
-                prev_value = values[1]
-                for idx in 2:length(values)
-                    push!(percent_deltas, format_percent_delta(values[idx], prev_value))
-                    prev_value = values[idx]
+                current_value = values[end]
+                for idx in 1:(length(values) - 1)
+                    push!(percent_deltas, format_percent_delta(current_value, values[idx]))
                 end
             end
 
