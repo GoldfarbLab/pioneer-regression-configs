@@ -259,6 +259,8 @@ function build_html_report(
     println(buffer, ".metrics-table th.numeric, .metrics-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
     println(buffer, ".metrics-table tbody tr:hover td { background: #eef6ff; }")
+    println(buffer, ".metrics-table td.metric-good { background: #e7f3f5; }")
+    println(buffer, ".metrics-table td.metric-bad { background: #f6e9ea; }")
     println(buffer, ".metrics-table thead th { position: sticky; top: 0; z-index: 1; }")
     println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
     println(buffer, ".table-controls { margin: 6px 0 10px; display: flex; gap: 8px; align-items: center; }")
@@ -452,16 +454,60 @@ function build_html_report(
     println(buffer, "    Plotly.newPlot(container, series, layout, { displaylogo: false, responsive: true });")
     println(buffer, "  });")
     println(buffer, "}")
+    println(buffer, "function applyValueCues() {")
+    println(buffer, "  const tables = document.querySelectorAll(\"table.metrics-table\");")
+    println(buffer, "  tables.forEach(table => {")
+    println(buffer, "    const group = (table.dataset.metricGroup || \"\").toLowerCase();")
+    println(buffer, "    const headers = Array.from(table.querySelectorAll(\"thead th\")).map(th => th.textContent.trim());")
+    println(buffer, "    const rows = Array.from(table.tBodies[0]?.rows || []);")
+    println(buffer, "    rows.forEach(row => {")
+    println(buffer, "      Array.from(row.cells).forEach((cell, idx) => {")
+    println(buffer, "        if (!cell.classList.contains(\"numeric\")) return;")
+    println(buffer, "        const header = headers[idx] || \"\";")
+    println(buffer, "        const value = parseCellValue(cell.textContent);")
+    println(buffer, "        if (Number.isNaN(value)) return;")
+    println(buffer, "        const isDelta = header.startsWith(\"Δ \");")
+    println(buffer, "        const isPercent = header.startsWith(\"% \");")
+    println(buffer, "        const isRaw = !isDelta && !isPercent;")
+    println(buffer, "        let classification = null;")
+    println(buffer, "        if (group === \"identification\" && (isDelta || isPercent)) {")
+    println(buffer, "          if (value > 0) classification = \"good\";")
+    println(buffer, "          else if (value < 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"runtime\" && (isDelta || isPercent)) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"cv\" && isDelta) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"fold_change_variance\" && isDelta) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"entrapment\" && isRaw) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"ftr\" && isRaw) {")
+    println(buffer, "          if (value < 0.01) classification = \"good\";")
+    println(buffer, "          else if (value > 0.01) classification = \"bad\";")
+    println(buffer, "        }")
+    println(buffer, "        if (!classification) return;")
+    println(buffer, "        cell.classList.remove(\"metric-good\", \"metric-bad\");")
+    println(buffer, "        cell.classList.add(classification === \"good\" ? \"metric-good\" : \"metric-bad\");")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "  });")
+    println(buffer, "}")
     println(buffer, "if (document.readyState === \"loading\") {")
     println(buffer, "  document.addEventListener(\"DOMContentLoaded\", () => {")
     println(buffer, "    setupSortableTables();")
     println(buffer, "    setupTableFilters();")
     println(buffer, "    setupTableCharts();")
+    println(buffer, "    applyValueCues();")
     println(buffer, "  });")
     println(buffer, "} else {")
     println(buffer, "  setupSortableTables();")
     println(buffer, "  setupTableFilters();")
     println(buffer, "  setupTableCharts();")
+    println(buffer, "  applyValueCues();")
     println(buffer, "}")
     println(buffer, "</script>")
     println(buffer, "</body>")
@@ -487,6 +533,8 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, ".metrics-table th.numeric, .metrics-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
     println(buffer, ".metrics-table tbody tr:hover td { background: #eef6ff; }")
+    println(buffer, ".metrics-table td.metric-good { background: #e7f3f5; }")
+    println(buffer, ".metrics-table td.metric-bad { background: #f6e9ea; }")
     println(buffer, ".metrics-table thead th { position: sticky; top: 0; z-index: 1; }")
     println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
     println(buffer, ".table-controls { margin: 6px 0 10px; display: flex; gap: 8px; align-items: center; }")
@@ -655,16 +703,60 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, "    Plotly.newPlot(container, series, layout, { displaylogo: false, responsive: true });")
     println(buffer, "  });")
     println(buffer, "}")
+    println(buffer, "function applyValueCues() {")
+    println(buffer, "  const tables = document.querySelectorAll(\"table.metrics-table\");")
+    println(buffer, "  tables.forEach(table => {")
+    println(buffer, "    const group = (table.dataset.metricGroup || \"\").toLowerCase();")
+    println(buffer, "    const headers = Array.from(table.querySelectorAll(\"thead th\")).map(th => th.textContent.trim());")
+    println(buffer, "    const rows = Array.from(table.tBodies[0]?.rows || []);")
+    println(buffer, "    rows.forEach(row => {")
+    println(buffer, "      Array.from(row.cells).forEach((cell, idx) => {")
+    println(buffer, "        if (!cell.classList.contains(\"numeric\")) return;")
+    println(buffer, "        const header = headers[idx] || \"\";")
+    println(buffer, "        const value = parseCellValue(cell.textContent);")
+    println(buffer, "        if (Number.isNaN(value)) return;")
+    println(buffer, "        const isDelta = header.startsWith(\"Δ \");")
+    println(buffer, "        const isPercent = header.startsWith(\"% \");")
+    println(buffer, "        const isRaw = !isDelta && !isPercent;")
+    println(buffer, "        let classification = null;")
+    println(buffer, "        if (group === \"identification\" && (isDelta || isPercent)) {")
+    println(buffer, "          if (value > 0) classification = \"good\";")
+    println(buffer, "          else if (value < 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"runtime\" && (isDelta || isPercent)) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"cv\" && isDelta) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"fold_change_variance\" && isDelta) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"entrapment\" && isRaw) {")
+    println(buffer, "          if (value < 0) classification = \"good\";")
+    println(buffer, "          else if (value > 0) classification = \"bad\";")
+    println(buffer, "        } else if (group === \"ftr\" && isRaw) {")
+    println(buffer, "          if (value < 0.01) classification = \"good\";")
+    println(buffer, "          else if (value > 0.01) classification = \"bad\";")
+    println(buffer, "        }")
+    println(buffer, "        if (!classification) return;")
+    println(buffer, "        cell.classList.remove(\"metric-good\", \"metric-bad\");")
+    println(buffer, "        cell.classList.add(classification === \"good\" ? \"metric-good\" : \"metric-bad\");")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "  });")
+    println(buffer, "}")
     println(buffer, "if (document.readyState === \"loading\") {")
     println(buffer, "  document.addEventListener(\"DOMContentLoaded\", () => {")
     println(buffer, "    setupSortableTables();")
     println(buffer, "    setupTableFilters();")
     println(buffer, "    setupTableCharts();")
+    println(buffer, "    applyValueCues();")
     println(buffer, "  });")
     println(buffer, "} else {")
     println(buffer, "  setupSortableTables();")
     println(buffer, "  setupTableFilters();")
     println(buffer, "  setupTableCharts();")
+    println(buffer, "  applyValueCues();")
     println(buffer, "}")
     println(buffer, "</script>")
     println(buffer, "</body>")
@@ -912,6 +1004,7 @@ function write_fold_change_table(
         initial_sort,
         "\" data-versions=\"",
         html_escape(join(versions, "|")),
+        "\" data-metric-group=\"fold_change",
         "\" id=\"",
         html_escape(table_id),
         "\">",
@@ -1012,6 +1105,7 @@ function write_fold_change_fc_variance_table(
         initial_sort,
         "\" data-versions=\"",
         html_escape(join(versions, "|")),
+        "\" data-metric-group=\"fold_change_variance",
         "\" id=\"",
         html_escape(table_id),
         "\">",
@@ -1112,6 +1206,7 @@ function write_keap1_table(
         initial_sort,
         "\" data-versions=\"",
         html_escape(join(versions, "|")),
+        "\" data-metric-group=\"keap1",
         "\" id=\"",
         html_escape(table_id),
         "\">",
@@ -1300,6 +1395,8 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             initial_sort,
             "\" data-versions=\"",
             html_escape(join(versions, "|")),
+            "\" data-metric-group=\"",
+            html_escape(group),
             "\" id=\"",
             html_escape(table_id),
             "\">",
