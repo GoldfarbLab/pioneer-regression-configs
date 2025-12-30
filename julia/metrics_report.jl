@@ -122,6 +122,65 @@ function html_escape(text::AbstractString)
     replace(escaped, "'" => "&#39;")
 end
 
+function next_table_id(counter::Base.RefValue{Int}, prefix::AbstractString)
+    counter[] += 1
+    string(prefix, "-", counter[])
+end
+
+function print_table_headers(
+    buffer::IOBuffer,
+    headers::Vector{String},
+    numeric_start::Int,
+)
+    println(buffer, "<thead><tr>")
+    for (idx, header) in enumerate(headers)
+        class_attr = idx >= numeric_start ? " class=\"numeric\"" : ""
+        println(buffer, "<th", class_attr, ">", html_escape(header), "</th>")
+    end
+    println(buffer, "</tr></thead>")
+end
+
+function print_table_row(
+    buffer::IOBuffer,
+    row_parts::Vector{String},
+    numeric_start::Int;
+    dataset::AbstractString = "",
+    search::AbstractString = "",
+)
+    dataset_attr = isempty(dataset) ? "" : " data-dataset=\"" * html_escape(dataset) * "\""
+    search_attr = isempty(search) ? "" : " data-search=\"" * html_escape(search) * "\""
+    println(buffer, "<tr", dataset_attr, search_attr, ">")
+    for (idx, value) in enumerate(row_parts)
+        class_attr = idx >= numeric_start ? " class=\"numeric\"" : ""
+        println(buffer, "<td", class_attr, ">", html_escape(value), "</td>")
+    end
+    println(buffer, "</tr>")
+end
+
+function print_table_controls(
+    buffer::IOBuffer,
+    table_id::AbstractString;
+    chart_mode::AbstractString = "",
+)
+    if !isempty(chart_mode)
+        println(
+            buffer,
+            "<div class=\"table-chart\" data-table-id=\"",
+            html_escape(table_id),
+            "\" data-chart-mode=\"",
+            html_escape(chart_mode),
+            "\"></div>",
+        )
+    end
+    println(
+        buffer,
+        "<div class=\"table-controls\"><label>Filter: ",
+        "<input class=\"table-filter\" type=\"search\" placeholder=\"Filter rows\" data-table-id=\"",
+        html_escape(table_id),
+        "\"></label></div>",
+    )
+end
+
 function fdr_plot_paths(metrics_dir::AbstractString)
     plots = String[]
     if isdir(metrics_dir)
@@ -197,9 +256,17 @@ function build_html_report(
     println(buffer, ".metrics-table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }")
     println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
     println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
+    println(buffer, ".metrics-table th.numeric, .metrics-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
+    println(buffer, ".metrics-table tbody tr:hover td { background: #eef6ff; }")
+    println(buffer, ".metrics-table thead th { position: sticky; top: 0; z-index: 1; }")
     println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
+    println(buffer, ".table-controls { margin: 6px 0 10px; display: flex; gap: 8px; align-items: center; }")
+    println(buffer, ".table-controls label { font-size: 12px; color: #444; }")
+    println(buffer, ".table-filter { padding: 4px 6px; font-size: 12px; min-width: 220px; }")
+    println(buffer, ".table-chart { height: 260px; margin: 6px 0 12px; }")
     println(buffer, "</style>")
+    println(buffer, "<script src=\"https://cdn.plot.ly/plotly-2.27.0.min.js\"></script>")
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<div class=\"metrics-report\">")
@@ -284,10 +351,117 @@ function build_html_report(
     println(buffer, "    }")
     println(buffer, "  });")
     println(buffer, "}")
+    println(buffer, "function setupTableFilters() {")
+    println(buffer, "  const inputs = document.querySelectorAll(\".table-filter\");")
+    println(buffer, "  inputs.forEach(input => {")
+    println(buffer, "    const tableId = input.dataset.tableId;")
+    println(buffer, "    if (!tableId) return;")
+    println(buffer, "    const table = document.getElementById(tableId);")
+    println(buffer, "    if (!table) return;")
+    println(buffer, "    input.addEventListener(\"input\", () => {")
+    println(buffer, "      const query = input.value.trim().toLowerCase();")
+    println(buffer, "      const rows = Array.from(table.tBodies[0].rows);")
+    println(buffer, "      rows.forEach(row => {")
+    println(buffer, "        const text = row.textContent.toLowerCase();")
+    println(buffer, "        const dataset = (row.dataset.dataset || \"\").toLowerCase();")
+    println(buffer, "        const search = (row.dataset.search || \"\").toLowerCase();")
+    println(buffer, "        const haystack = `${text} ${dataset} ${search}`;")
+    println(buffer, "        row.style.display = !query || haystack.includes(query) ? \"\" : \"none\";")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "function collectSeries(table, mode) {")
+    println(buffer, "  const headers = Array.from(table.querySelectorAll(\"thead th\")).map(th => th.textContent.trim());")
+    println(buffer, "  const versions = (table.dataset.versions || \"\").split(\"|\").filter(Boolean);")
+    println(buffer, "  const rows = Array.from(table.tBodies[0].rows);")
+    println(buffer, "  if (!rows.length) return [];")
+    println(buffer, "  const xValues = rows.map(row => row.dataset.dataset || (row.cells[0] ? row.cells[0].textContent.trim() : \"\"));")
+    println(buffer, "  const searchValues = rows.map(row => row.dataset.search || \"\");")
+    println(buffer, "  const columnIndexes = [];")
+    println(buffer, "  const labels = [];")
+    println(buffer, "  if (mode === \"raw\") {")
+    println(buffer, "    versions.forEach(version => {")
+    println(buffer, "      const idx = headers.indexOf(version);")
+    println(buffer, "      if (idx >= 0) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(version);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  } else if (mode === \"delta\") {")
+    println(buffer, "    headers.forEach((header, idx) => {")
+    println(buffer, "      if (header.startsWith(\"Δ \")) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(header);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  } else if (mode === \"percent_delta\") {")
+    println(buffer, "    headers.forEach((header, idx) => {")
+    println(buffer, "      if (header.startsWith(\"% \")) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(header);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  }")
+    println(buffer, "  if (!columnIndexes.length) return [];")
+    println(buffer, "  return labels.map((label, seriesIdx) => {")
+    println(buffer, "    const columnIndex = columnIndexes[seriesIdx];")
+    println(buffer, "    const yValues = rows.map(row => {")
+    println(buffer, "      const cell = row.cells[columnIndex];")
+    println(buffer, "      const value = cell ? parseCellValue(cell.textContent) : NaN;")
+    println(buffer, "      return Number.isNaN(value) ? null : value;")
+    println(buffer, "    });")
+    println(buffer, "    const hoverText = rows.map((row, idx) => {")
+    println(buffer, "      const dataset = xValues[idx];")
+    println(buffer, "      const search = searchValues[idx];")
+    println(buffer, "      return search ? `${dataset}<br>${search}` : dataset;")
+    println(buffer, "    });")
+    println(buffer, "    return {")
+    println(buffer, "      name: label,")
+    println(buffer, "      x: xValues,")
+    println(buffer, "      y: yValues,")
+    println(buffer, "      text: hoverText,")
+    println(buffer, "      hovertemplate: \"%{text}<br>%{y}<extra>%{name}</extra>\",")
+    println(buffer, "      mode: \"lines+markers\"")
+    println(buffer, "    };")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "function setupTableCharts() {")
+    println(buffer, "  if (typeof Plotly === \"undefined\") return;")
+    println(buffer, "  const chartContainers = document.querySelectorAll(\".table-chart\");")
+    println(buffer, "  chartContainers.forEach(container => {")
+    println(buffer, "    const tableId = container.dataset.tableId;")
+    println(buffer, "    const mode = container.dataset.chartMode || \"\";")
+    println(buffer, "    if (!tableId || !mode) return;")
+    println(buffer, "    const table = document.getElementById(tableId);")
+    println(buffer, "    if (!table) return;")
+    println(buffer, "    const series = collectSeries(table, mode);")
+    println(buffer, "    if (!series.length) {")
+    println(buffer, "      container.style.display = \"none\";")
+    println(buffer, "      return;")
+    println(buffer, "    }")
+    println(buffer, "    const showZeroLine = mode !== \"raw\";")
+    println(buffer, "    const layout = {")
+    println(buffer, "      margin: { l: 50, r: 20, t: 10, b: 40 },")
+    println(buffer, "      height: 260,")
+    println(buffer, "      xaxis: { title: \"Dataset\", automargin: true },")
+    println(buffer, "      yaxis: { title: mode === \"raw\" ? \"Value\" : (mode === \"percent_delta\" ? \"Δ %\" : \"Δ\"), automargin: true },")
+    println(buffer, "      legend: { orientation: \"h\" },")
+    println(buffer, "      shapes: showZeroLine ? [{ type: \"line\", xref: \"paper\", x0: 0, x1: 1, y0: 0, y1: 0, line: { color: \"#666\", width: 1, dash: \"dash\" } }] : []")
+    println(buffer, "    };")
+    println(buffer, "    Plotly.newPlot(container, series, layout, { displaylogo: false, responsive: true });")
+    println(buffer, "  });")
+    println(buffer, "}")
     println(buffer, "if (document.readyState === \"loading\") {")
-    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", setupSortableTables);")
+    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", () => {")
+    println(buffer, "    setupSortableTables();")
+    println(buffer, "    setupTableFilters();")
+    println(buffer, "    setupTableCharts();")
+    println(buffer, "  });")
     println(buffer, "} else {")
     println(buffer, "  setupSortableTables();")
+    println(buffer, "  setupTableFilters();")
+    println(buffer, "  setupTableCharts();")
     println(buffer, "}")
     println(buffer, "</script>")
     println(buffer, "</body>")
@@ -310,9 +484,17 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, ".metrics-table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }")
     println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
     println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
+    println(buffer, ".metrics-table th.numeric, .metrics-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
+    println(buffer, ".metrics-table tbody tr:hover td { background: #eef6ff; }")
+    println(buffer, ".metrics-table thead th { position: sticky; top: 0; z-index: 1; }")
     println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
+    println(buffer, ".table-controls { margin: 6px 0 10px; display: flex; gap: 8px; align-items: center; }")
+    println(buffer, ".table-controls label { font-size: 12px; color: #444; }")
+    println(buffer, ".table-filter { padding: 4px 6px; font-size: 12px; min-width: 220px; }")
+    println(buffer, ".table-chart { height: 260px; margin: 6px 0 12px; }")
     println(buffer, "</style>")
+    println(buffer, "<script src=\"https://cdn.plot.ly/plotly-2.27.0.min.js\"></script>")
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<div class=\"metrics-report\">")
@@ -372,10 +554,117 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, "    }")
     println(buffer, "  });")
     println(buffer, "}")
+    println(buffer, "function setupTableFilters() {")
+    println(buffer, "  const inputs = document.querySelectorAll(\".table-filter\");")
+    println(buffer, "  inputs.forEach(input => {")
+    println(buffer, "    const tableId = input.dataset.tableId;")
+    println(buffer, "    if (!tableId) return;")
+    println(buffer, "    const table = document.getElementById(tableId);")
+    println(buffer, "    if (!table) return;")
+    println(buffer, "    input.addEventListener(\"input\", () => {")
+    println(buffer, "      const query = input.value.trim().toLowerCase();")
+    println(buffer, "      const rows = Array.from(table.tBodies[0].rows);")
+    println(buffer, "      rows.forEach(row => {")
+    println(buffer, "        const text = row.textContent.toLowerCase();")
+    println(buffer, "        const dataset = (row.dataset.dataset || \"\").toLowerCase();")
+    println(buffer, "        const search = (row.dataset.search || \"\").toLowerCase();")
+    println(buffer, "        const haystack = `${text} ${dataset} ${search}`;")
+    println(buffer, "        row.style.display = !query || haystack.includes(query) ? \"\" : \"none\";")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "function collectSeries(table, mode) {")
+    println(buffer, "  const headers = Array.from(table.querySelectorAll(\"thead th\")).map(th => th.textContent.trim());")
+    println(buffer, "  const versions = (table.dataset.versions || \"\").split(\"|\").filter(Boolean);")
+    println(buffer, "  const rows = Array.from(table.tBodies[0].rows);")
+    println(buffer, "  if (!rows.length) return [];")
+    println(buffer, "  const xValues = rows.map(row => row.dataset.dataset || (row.cells[0] ? row.cells[0].textContent.trim() : \"\"));")
+    println(buffer, "  const searchValues = rows.map(row => row.dataset.search || \"\");")
+    println(buffer, "  const columnIndexes = [];")
+    println(buffer, "  const labels = [];")
+    println(buffer, "  if (mode === \"raw\") {")
+    println(buffer, "    versions.forEach(version => {")
+    println(buffer, "      const idx = headers.indexOf(version);")
+    println(buffer, "      if (idx >= 0) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(version);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  } else if (mode === \"delta\") {")
+    println(buffer, "    headers.forEach((header, idx) => {")
+    println(buffer, "      if (header.startsWith(\"Δ \")) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(header);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  } else if (mode === \"percent_delta\") {")
+    println(buffer, "    headers.forEach((header, idx) => {")
+    println(buffer, "      if (header.startsWith(\"% \")) {")
+    println(buffer, "        columnIndexes.push(idx);")
+    println(buffer, "        labels.push(header);")
+    println(buffer, "      }")
+    println(buffer, "    });")
+    println(buffer, "  }")
+    println(buffer, "  if (!columnIndexes.length) return [];")
+    println(buffer, "  return labels.map((label, seriesIdx) => {")
+    println(buffer, "    const columnIndex = columnIndexes[seriesIdx];")
+    println(buffer, "    const yValues = rows.map(row => {")
+    println(buffer, "      const cell = row.cells[columnIndex];")
+    println(buffer, "      const value = cell ? parseCellValue(cell.textContent) : NaN;")
+    println(buffer, "      return Number.isNaN(value) ? null : value;")
+    println(buffer, "    });")
+    println(buffer, "    const hoverText = rows.map((row, idx) => {")
+    println(buffer, "      const dataset = xValues[idx];")
+    println(buffer, "      const search = searchValues[idx];")
+    println(buffer, "      return search ? `${dataset}<br>${search}` : dataset;")
+    println(buffer, "    });")
+    println(buffer, "    return {")
+    println(buffer, "      name: label,")
+    println(buffer, "      x: xValues,")
+    println(buffer, "      y: yValues,")
+    println(buffer, "      text: hoverText,")
+    println(buffer, "      hovertemplate: \"%{text}<br>%{y}<extra>%{name}</extra>\",")
+    println(buffer, "      mode: \"lines+markers\"")
+    println(buffer, "    };")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "function setupTableCharts() {")
+    println(buffer, "  if (typeof Plotly === \"undefined\") return;")
+    println(buffer, "  const chartContainers = document.querySelectorAll(\".table-chart\");")
+    println(buffer, "  chartContainers.forEach(container => {")
+    println(buffer, "    const tableId = container.dataset.tableId;")
+    println(buffer, "    const mode = container.dataset.chartMode || \"\";")
+    println(buffer, "    if (!tableId || !mode) return;")
+    println(buffer, "    const table = document.getElementById(tableId);")
+    println(buffer, "    if (!table) return;")
+    println(buffer, "    const series = collectSeries(table, mode);")
+    println(buffer, "    if (!series.length) {")
+    println(buffer, "      container.style.display = \"none\";")
+    println(buffer, "      return;")
+    println(buffer, "    }")
+    println(buffer, "    const showZeroLine = mode !== \"raw\";")
+    println(buffer, "    const layout = {")
+    println(buffer, "      margin: { l: 50, r: 20, t: 10, b: 40 },")
+    println(buffer, "      height: 260,")
+    println(buffer, "      xaxis: { title: \"Dataset\", automargin: true },")
+    println(buffer, "      yaxis: { title: mode === \"raw\" ? \"Value\" : (mode === \"percent_delta\" ? \"Δ %\" : \"Δ\"), automargin: true },")
+    println(buffer, "      legend: { orientation: \"h\" },")
+    println(buffer, "      shapes: showZeroLine ? [{ type: \"line\", xref: \"paper\", x0: 0, x1: 1, y0: 0, y1: 0, line: { color: \"#666\", width: 1, dash: \"dash\" } }] : []")
+    println(buffer, "    };")
+    println(buffer, "    Plotly.newPlot(container, series, layout, { displaylogo: false, responsive: true });")
+    println(buffer, "  });")
+    println(buffer, "}")
     println(buffer, "if (document.readyState === \"loading\") {")
-    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", setupSortableTables);")
+    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", () => {")
+    println(buffer, "    setupSortableTables();")
+    println(buffer, "    setupTableFilters();")
+    println(buffer, "    setupTableCharts();")
+    println(buffer, "  });")
     println(buffer, "} else {")
     println(buffer, "  setupSortableTables();")
+    println(buffer, "  setupTableFilters();")
+    println(buffer, "  setupTableCharts();")
     println(buffer, "}")
     println(buffer, "</script>")
     println(buffer, "</body>")
@@ -601,6 +890,7 @@ function write_fold_change_table(
     entries::Set{Tuple{String, String, String, String}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     isempty(entries) && return
     println(buffer, "<div class=\"metric-block\">")
@@ -614,12 +904,19 @@ function write_fold_change_table(
         )
     end
     initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
-    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
-    println(buffer, "<thead><tr>")
-    for header in header_parts
-        println(buffer, "<th>", html_escape(header), "</th>")
-    end
-    println(buffer, "</tr></thead>")
+    table_id = next_table_id(table_counter, "fold-change-" * slugify_label(group))
+    print_table_controls(buffer, table_id; chart_mode = "delta")
+    println(
+        buffer,
+        "<table class=\"metrics-table\" data-initial-sort=\"",
+        initial_sort,
+        "\" data-versions=\"",
+        html_escape(join(versions, "|")),
+        "\" id=\"",
+        html_escape(table_id),
+        "\">",
+    )
+    print_table_headers(buffer, header_parts, 4)
     println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[2], entry[3], entry[4]))
@@ -662,11 +959,13 @@ function write_fold_change_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "<tr>")
-        for value in row_parts
-            println(buffer, "<td>", html_escape(value), "</td>")
-        end
-        println(buffer, "</tr>")
+        print_table_row(
+            buffer,
+            row_parts,
+            4;
+            dataset = dataset,
+            search = search,
+        )
     end
     println(buffer, "</tbody></table>")
     println(buffer, "</div>")
@@ -677,10 +976,11 @@ function write_fold_change_tables(
     fold_change_entries::Dict{String, Set{Tuple{String, String, String, String}}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     for group in ("precursors", "protein_groups")
         entries = get(fold_change_entries, group, Set{Tuple{String, String, String, String}}())
-        write_fold_change_table(buffer, group, entries, version_data, versions)
+        write_fold_change_table(buffer, group, entries, version_data, versions, table_counter)
     end
 end
 
@@ -690,6 +990,7 @@ function write_fold_change_fc_variance_table(
     entries::Set{Tuple{String, String, String, String}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     isempty(entries) && return
     println(buffer, "<div class=\"metric-block\">")
@@ -703,12 +1004,19 @@ function write_fold_change_fc_variance_table(
         )
     end
     initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
-    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
-    println(buffer, "<thead><tr>")
-    for header in header_parts
-        println(buffer, "<th>", html_escape(header), "</th>")
-    end
-    println(buffer, "</tr></thead>")
+    table_id = next_table_id(table_counter, "fold-change-variance-" * slugify_label(group))
+    print_table_controls(buffer, table_id; chart_mode = "delta")
+    println(
+        buffer,
+        "<table class=\"metrics-table\" data-initial-sort=\"",
+        initial_sort,
+        "\" data-versions=\"",
+        html_escape(join(versions, "|")),
+        "\" id=\"",
+        html_escape(table_id),
+        "\">",
+    )
+    print_table_headers(buffer, header_parts, 4)
     println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[2], entry[3], entry[4]))
@@ -751,11 +1059,13 @@ function write_fold_change_fc_variance_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "<tr>")
-        for value in row_parts
-            println(buffer, "<td>", html_escape(value), "</td>")
-        end
-        println(buffer, "</tr>")
+        print_table_row(
+            buffer,
+            row_parts,
+            4;
+            dataset = dataset,
+            search = search,
+        )
     end
     println(buffer, "</tbody></table>")
     println(buffer, "</div>")
@@ -766,10 +1076,11 @@ function write_fold_change_fc_variance_tables(
     fold_change_fc_variance_entries::Dict{String, Set{Tuple{String, String, String, String}}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     for group in ("precursors", "protein_groups")
         entries = get(fold_change_fc_variance_entries, group, Set{Tuple{String, String, String, String}}())
-        write_fold_change_fc_variance_table(buffer, group, entries, version_data, versions)
+        write_fold_change_fc_variance_table(buffer, group, entries, version_data, versions, table_counter)
     end
 end
 
@@ -779,6 +1090,7 @@ function write_keap1_table(
     entries::Set{Tuple{String, String, String, String, String}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     isempty(entries) && return
     println(buffer, "<div class=\"metric-block\">")
@@ -792,12 +1104,19 @@ function write_keap1_table(
         )
     end
     initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
-    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
-    println(buffer, "<thead><tr>")
-    for header in header_parts
-        println(buffer, "<th>", html_escape(header), "</th>")
-    end
-    println(buffer, "</tr></thead>")
+    table_id = next_table_id(table_counter, "keap1-" * slugify_label(group))
+    print_table_controls(buffer, table_id)
+    println(
+        buffer,
+        "<table class=\"metrics-table\" data-initial-sort=\"",
+        initial_sort,
+        "\" data-versions=\"",
+        html_escape(join(versions, "|")),
+        "\" id=\"",
+        html_escape(table_id),
+        "\">",
+    )
+    print_table_headers(buffer, header_parts, 4)
     println(buffer, "<tbody>")
 
     entries_sorted = sort(collect(entries); by = entry -> (entry[1], entry[3], entry[4]))
@@ -831,11 +1150,13 @@ function write_keap1_table(
             [format_value(value) for value in values],
             deltas,
         )
-        println(buffer, "<tr>")
-        for value in row_parts
-            println(buffer, "<td>", html_escape(value), "</td>")
-        end
-        println(buffer, "</tr>")
+        print_table_row(
+            buffer,
+            row_parts,
+            4;
+            dataset = dataset,
+            search = search,
+        )
     end
     println(buffer, "</tbody></table>")
     println(buffer, "</div>")
@@ -846,15 +1167,17 @@ function write_keap1_tables(
     keap1_entries::Dict{String, Set{Tuple{String, String, String, String, String}}},
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
+    table_counter::Base.RefValue{Int},
 )
     for group in ("precursors", "protein_groups")
         entries = get(keap1_entries, group, Set{Tuple{String, String, String, String, String}}())
-        write_keap1_table(buffer, group, entries, version_data, versions)
+        write_keap1_table(buffer, group, entries, version_data, versions, table_counter)
     end
 end
 
 function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
     buffer = IOBuffer()
+    table_counter = Ref(0)
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h2>Regression Metrics Report</h2>")
     println(
@@ -921,11 +1244,17 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         for (rank, label) in special_blocks
             if !special_written[label] && metric_rank > rank
                 if label == :keap1
-                    write_keap1_tables(buffer, keap1_entries, version_data, versions)
+                    write_keap1_tables(buffer, keap1_entries, version_data, versions, table_counter)
                 elseif label == :fold_change
-                    write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+                    write_fold_change_tables(buffer, fold_change_entries, version_data, versions, table_counter)
                 elseif label == :fold_change_fc_variance
-                    write_fold_change_fc_variance_tables(buffer, fold_change_fc_variance_entries, version_data, versions)
+                    write_fold_change_fc_variance_tables(
+                        buffer,
+                        fold_change_fc_variance_entries,
+                        version_data,
+                        versions,
+                        table_counter,
+                    )
                 end
                 special_written[label] = true
             end
@@ -954,12 +1283,28 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             delta_index = base_columns + length(versions) + 1
             initial_sort = string(delta_index)
         end
-        println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
-        println(buffer, "<thead><tr>")
-        for header in header_parts
-            println(buffer, "<th>", html_escape(header), "</th>")
+        chart_mode = ""
+        group = normalized_group(metric_group(metric))
+        if group == "identification" || group == "runtime"
+            chart_mode = "percent_delta"
+        elseif group == "entrapment"
+            chart_mode = "raw"
+        elseif group == "cv"
+            chart_mode = "delta"
         end
-        println(buffer, "</tr></thead>")
+        table_id = next_table_id(table_counter, slugify_label(metric))
+        print_table_controls(buffer, table_id; chart_mode = chart_mode)
+        println(
+            buffer,
+            "<table class=\"metrics-table\" data-initial-sort=\"",
+            initial_sort,
+            "\" data-versions=\"",
+            html_escape(join(versions, "|")),
+            "\" id=\"",
+            html_escape(table_id),
+            "\">",
+        )
+        print_table_headers(buffer, header_parts, 2)
         println(buffer, "<tbody>")
 
         for (search, dataset) in entries_sorted
@@ -987,7 +1332,6 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
             end
 
             percent_deltas = String[]
-            group = normalized_group(metric_group(metric))
             if length(values) > 1 && group in ("identification", "runtime")
                 current_value = values[end]
                 for idx in 1:(length(values) - 1)
@@ -1001,11 +1345,13 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
                 deltas,
                 percent_deltas,
             )
-            println(buffer, "<tr>")
-            for value in row_parts
-                println(buffer, "<td>", html_escape(value), "</td>")
-            end
-            println(buffer, "</tr>")
+            print_table_row(
+                buffer,
+                row_parts,
+                2;
+                dataset = dataset,
+                search = search,
+            )
         end
         println(buffer, "</tbody></table>")
         println(buffer, "</div>")
@@ -1013,11 +1359,17 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
     for (rank, label) in special_blocks
         if !special_written[label]
             if label == :keap1
-                write_keap1_tables(buffer, keap1_entries, version_data, versions)
+                write_keap1_tables(buffer, keap1_entries, version_data, versions, table_counter)
             elseif label == :fold_change
-                write_fold_change_tables(buffer, fold_change_entries, version_data, versions)
+                write_fold_change_tables(buffer, fold_change_entries, version_data, versions, table_counter)
             elseif label == :fold_change_fc_variance
-                write_fold_change_fc_variance_tables(buffer, fold_change_fc_variance_entries, version_data, versions)
+                write_fold_change_fc_variance_tables(
+                    buffer,
+                    fold_change_fc_variance_entries,
+                    version_data,
+                    versions,
+                    table_counter,
+                )
             end
             special_written[label] = true
         end
