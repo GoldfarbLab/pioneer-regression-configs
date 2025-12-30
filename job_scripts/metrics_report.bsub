@@ -9,7 +9,7 @@
 #BSUB -W 600
 #BSUB -M 8GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.err.txt
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
 
 set -euo pipefail
 : "${PIONEER_METRICS_RELEASE_ROOT:?PIONEER_METRICS_RELEASE_ROOT not set}"

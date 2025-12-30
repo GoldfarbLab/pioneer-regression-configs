@@ -8,7 +8,7 @@
 #BSUB -n 4
 #BSUB -W 120
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.err
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
 
 set -euo pipefail
 : "${PIONEER_DIR:?PIONEER_DIR not set}"

@@ -9,7 +9,7 @@
 #BSUB -W 3000
 #BSUB -M 64GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.err.txt
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 
 set -euo pipefail
 : "${PIONEER_DIR:?PIONEER_DIR not set}"

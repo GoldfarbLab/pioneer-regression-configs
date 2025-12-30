@@ -9,7 +9,7 @@
 #BSUB -W 2400
 #BSUB -M 16GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.out.txt
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.err.txt
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics.%J.out.txt
 
 set -euo pipefail
 : "${PIONEER_PARAMS_DIR:?PIONEER_PARAMS_DIR not set}"

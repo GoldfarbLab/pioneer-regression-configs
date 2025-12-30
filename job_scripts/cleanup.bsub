@@ -9,7 +9,7 @@
 #BSUB -W 60
 #BSUB -M 4GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.out
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.err
+#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.out
 
 set -euo pipefail
 : "${RUN_DIR:?RUN_DIR not set}"
