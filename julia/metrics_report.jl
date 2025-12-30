@@ -198,11 +198,10 @@ function build_html_report(
     println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
     println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
+    println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
     println(buffer, "</style>")
     println(buffer, "</head>")
     println(buffer, "<body>")
-    println(buffer, "<h1>Regression Metrics eFDR Plots</h1>")
-    println(buffer, "<p>Four-panel eFDR plot grids are organized per dataset.</p>")
     println(buffer, "<div class=\"metrics-report\">")
     println(buffer, metrics_report)
     println(buffer, "</div>")
@@ -231,6 +230,66 @@ function build_html_report(
         println(buffer, "</div>")
     end
 
+    println(buffer, "<script>")
+    println(buffer, "function parseCellValue(text) {")
+    println(buffer, "  const trimmed = text.trim();")
+    println(buffer, "  if (!trimmed || trimmed === \"NA\") return NaN;")
+    println(buffer, "  const cleaned = trimmed.replace(/[%+,]/g, \"\");")
+    println(buffer, "  const value = parseFloat(cleaned);")
+    println(buffer, "  return Number.isNaN(value) ? NaN : value;")
+    println(buffer, "}")
+    println(buffer, "function sortTable(table, columnIndex, direction) {")
+    println(buffer, "  const tbody = table.tBodies[0];")
+    println(buffer, "  if (!tbody) return;")
+    println(buffer, "  const rows = Array.from(tbody.rows);")
+    println(buffer, "  rows.sort((rowA, rowB) => {")
+    println(buffer, "    const cellA = rowA.cells[columnIndex];")
+    println(buffer, "    const cellB = rowB.cells[columnIndex];")
+    println(buffer, "    const textA = cellA ? cellA.textContent : \"\";")
+    println(buffer, "    const textB = cellB ? cellB.textContent : \"\";")
+    println(buffer, "    const numA = parseCellValue(textA);")
+    println(buffer, "    const numB = parseCellValue(textB);")
+    println(buffer, "    let result = 0;")
+    println(buffer, "    if (!Number.isNaN(numA) && !Number.isNaN(numB)) {")
+    println(buffer, "      result = numA - numB;")
+    println(buffer, "    } else if (!Number.isNaN(numA)) {")
+    println(buffer, "      result = 1;")
+    println(buffer, "    } else if (!Number.isNaN(numB)) {")
+    println(buffer, "      result = -1;")
+    println(buffer, "    } else {")
+    println(buffer, "      result = textA.localeCompare(textB);")
+    println(buffer, "    }")
+    println(buffer, "    return direction === \"asc\" ? result : -result;")
+    println(buffer, "  });")
+    println(buffer, "  rows.forEach(row => tbody.appendChild(row));")
+    println(buffer, "  table.dataset.sortIndex = columnIndex;")
+    println(buffer, "  table.dataset.sortDirection = direction;")
+    println(buffer, "}")
+    println(buffer, "function setupSortableTables() {")
+    println(buffer, "  const tables = document.querySelectorAll(\"table.metrics-table\");")
+    println(buffer, "  tables.forEach(table => {")
+    println(buffer, "    const headers = table.querySelectorAll(\"thead th\");")
+    println(buffer, "    headers.forEach((header, index) => {")
+    println(buffer, "      header.classList.add(\"sortable\");")
+    println(buffer, "      header.addEventListener(\"click\", () => {")
+    println(buffer, "        const currentIndex = parseInt(table.dataset.sortIndex || \"-1\", 10);")
+    println(buffer, "        const currentDirection = table.dataset.sortDirection || \"desc\";")
+    println(buffer, "        const nextDirection = currentIndex === index && currentDirection === \"desc\" ? \"asc\" : \"desc\";")
+    println(buffer, "        sortTable(table, index, nextDirection);")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "    const initial = table.dataset.initialSort;")
+    println(buffer, "    if (initial !== undefined && initial !== \"\") {")
+    println(buffer, "      sortTable(table, parseInt(initial, 10), \"desc\");")
+    println(buffer, "    }")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "if (document.readyState === \"loading\") {")
+    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", setupSortableTables);")
+    println(buffer, "} else {")
+    println(buffer, "  setupSortableTables();")
+    println(buffer, "}")
+    println(buffer, "</script>")
     println(buffer, "</body>")
     println(buffer, "</html>")
     String(take!(buffer))
@@ -252,12 +311,73 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, ".metrics-table th, .metrics-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }")
     println(buffer, ".metrics-table th { background: #f4f4f4; text-align: left; }")
     println(buffer, ".metrics-table tbody tr:nth-child(even) { background: #fafafa; }")
+    println(buffer, ".metrics-table th.sortable { cursor: pointer; }")
     println(buffer, "</style>")
     println(buffer, "</head>")
     println(buffer, "<body>")
     println(buffer, "<div class=\"metrics-report\">")
     println(buffer, metrics_report)
     println(buffer, "</div>")
+    println(buffer, "<script>")
+    println(buffer, "function parseCellValue(text) {")
+    println(buffer, "  const trimmed = text.trim();")
+    println(buffer, "  if (!trimmed || trimmed === \"NA\") return NaN;")
+    println(buffer, "  const cleaned = trimmed.replace(/[%+,]/g, \"\");")
+    println(buffer, "  const value = parseFloat(cleaned);")
+    println(buffer, "  return Number.isNaN(value) ? NaN : value;")
+    println(buffer, "}")
+    println(buffer, "function sortTable(table, columnIndex, direction) {")
+    println(buffer, "  const tbody = table.tBodies[0];")
+    println(buffer, "  if (!tbody) return;")
+    println(buffer, "  const rows = Array.from(tbody.rows);")
+    println(buffer, "  rows.sort((rowA, rowB) => {")
+    println(buffer, "    const cellA = rowA.cells[columnIndex];")
+    println(buffer, "    const cellB = rowB.cells[columnIndex];")
+    println(buffer, "    const textA = cellA ? cellA.textContent : \"\";")
+    println(buffer, "    const textB = cellB ? cellB.textContent : \"\";")
+    println(buffer, "    const numA = parseCellValue(textA);")
+    println(buffer, "    const numB = parseCellValue(textB);")
+    println(buffer, "    let result = 0;")
+    println(buffer, "    if (!Number.isNaN(numA) && !Number.isNaN(numB)) {")
+    println(buffer, "      result = numA - numB;")
+    println(buffer, "    } else if (!Number.isNaN(numA)) {")
+    println(buffer, "      result = 1;")
+    println(buffer, "    } else if (!Number.isNaN(numB)) {")
+    println(buffer, "      result = -1;")
+    println(buffer, "    } else {")
+    println(buffer, "      result = textA.localeCompare(textB);")
+    println(buffer, "    }")
+    println(buffer, "    return direction === \"asc\" ? result : -result;")
+    println(buffer, "  });")
+    println(buffer, "  rows.forEach(row => tbody.appendChild(row));")
+    println(buffer, "  table.dataset.sortIndex = columnIndex;")
+    println(buffer, "  table.dataset.sortDirection = direction;")
+    println(buffer, "}")
+    println(buffer, "function setupSortableTables() {")
+    println(buffer, "  const tables = document.querySelectorAll(\"table.metrics-table\");")
+    println(buffer, "  tables.forEach(table => {")
+    println(buffer, "    const headers = table.querySelectorAll(\"thead th\");")
+    println(buffer, "    headers.forEach((header, index) => {")
+    println(buffer, "      header.classList.add(\"sortable\");")
+    println(buffer, "      header.addEventListener(\"click\", () => {")
+    println(buffer, "        const currentIndex = parseInt(table.dataset.sortIndex || \"-1\", 10);")
+    println(buffer, "        const currentDirection = table.dataset.sortDirection || \"desc\";")
+    println(buffer, "        const nextDirection = currentIndex === index && currentDirection === \"desc\" ? \"asc\" : \"desc\";")
+    println(buffer, "        sortTable(table, index, nextDirection);")
+    println(buffer, "      });")
+    println(buffer, "    });")
+    println(buffer, "    const initial = table.dataset.initialSort;")
+    println(buffer, "    if (initial !== undefined && initial !== \"\") {")
+    println(buffer, "      sortTable(table, parseInt(initial, 10), \"desc\");")
+    println(buffer, "    }")
+    println(buffer, "  });")
+    println(buffer, "}")
+    println(buffer, "if (document.readyState === \"loading\") {")
+    println(buffer, "  document.addEventListener(\"DOMContentLoaded\", setupSortableTables);")
+    println(buffer, "} else {")
+    println(buffer, "  setupSortableTables();")
+    println(buffer, "}")
+    println(buffer, "</script>")
     println(buffer, "</body>")
     println(buffer, "</html>")
     String(take!(buffer))
@@ -490,10 +610,11 @@ function write_fold_change_table(
     if length(versions) > 1
         append!(
             header_parts,
-            ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+            ["Δ " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
         )
     end
-    println(buffer, "<table class=\"metrics-table\">")
+    initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
+    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
     println(buffer, "<thead><tr>")
     for header in header_parts
         println(buffer, "<th>", html_escape(header), "</th>")
@@ -578,10 +699,11 @@ function write_fold_change_fc_variance_table(
     if length(versions) > 1
         append!(
             header_parts,
-            ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+            ["Δ " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
         )
     end
-    println(buffer, "<table class=\"metrics-table\">")
+    initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
+    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
     println(buffer, "<thead><tr>")
     for header in header_parts
         println(buffer, "<th>", html_escape(header), "</th>")
@@ -666,10 +788,11 @@ function write_keap1_table(
     if length(versions) > 1
         append!(
             header_parts,
-            ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+            ["Δ " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
         )
     end
-    println(buffer, "<table class=\"metrics-table\">")
+    initial_sort = length(versions) > 1 ? string(length(header_parts) - 1) : ""
+    println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
     println(buffer, "<thead><tr>")
     for header in header_parts
         println(buffer, "<th>", html_escape(header), "</th>")
@@ -813,17 +936,23 @@ function build_report(version_data::AbstractDict{String, Any}, versions::Vector{
         if length(versions) > 1
             append!(
                 header_parts,
-                ["Δ " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+                ["Δ " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
             )
             group = normalized_group(metric_group(metric))
             if group in ("identification", "runtime")
                 append!(
                     header_parts,
-                    ["% " * versions[idx] * " vs prev" for idx in 2:length(versions)],
+                    ["% " * versions[idx] * " vs " * versions[idx - 1] for idx in 2:length(versions)],
                 )
             end
         end
-        println(buffer, "<table class=\"metrics-table\">")
+        initial_sort = ""
+        if length(versions) > 1
+            base_columns = 1
+            delta_index = base_columns + 2 * length(versions) - 2
+            initial_sort = string(delta_index)
+        end
+        println(buffer, "<table class=\"metrics-table\" data-initial-sort=\"", initial_sort, "\">")
         println(buffer, "<thead><tr>")
         for header in header_parts
             println(buffer, "<th>", html_escape(header), "</th>")
