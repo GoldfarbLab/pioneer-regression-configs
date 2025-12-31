@@ -35,6 +35,6 @@
     }
   },
   "maxLFQ": {
-    "run_to_run_normalization": false
+    "run_to_run_normalization": true
   }
 }
