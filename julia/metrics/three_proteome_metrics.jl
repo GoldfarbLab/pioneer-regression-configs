@@ -176,12 +176,27 @@ function gene_counts_metrics_by_run(
     gene_term::AbstractString,
 )
     counts = gene_counts_by_run(wide_df, quant_col_names, gene_term; table_label = level)
+    counts_by_run = Dict(String(k) => v for (k, v) in counts)
+    quant_columns = select_quant_columns(wide_df, quant_col_names)
     metrics = Dict{String, Int}()
 
-    for (col, count) in counts
-        label = get(labels_for_runs, String(col), String(col))
+    isempty(quant_columns) && return metrics
+
+    allowed_runs = if isempty(labels_for_runs)
+        quant_columns
+    else
+        mapped_keys = Set(keys(labels_for_runs))
+        mapped_values = Set(values(labels_for_runs))
+        [
+            col for col in quant_columns if String(col) in mapped_keys || String(col) in mapped_values
+        ]
+    end
+
+    for col in allowed_runs
+        col_name = String(col)
+        label = get(labels_for_runs, col_name, col_name)
         metric_name = string(gene_term, "_", normalize_metric_label(label))
-        metrics[metric_name] = count
+        metrics[metric_name] = get(counts_by_run, col_name, 0)
     end
 
     metrics
