@@ -14,13 +14,16 @@ using .RegressionMetricsHelpers: condition_columns, count_nonyeast_ids, count_sp
 using .EntrapmentMetrics: compute_entrapment_metrics
 using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_dataset, fold_change_metrics_for_table, gene_counts_metrics_by_run, load_experimental_design, load_three_proteome_designs, normalize_metric_label, run_groups_for_dataset, three_proteome_design_entry
 
+# Default metric buckets used when no per-search overrides are configured.
 const DEFAULT_METRIC_GROUPS = ["identification", "CV", "eFDR", "runtime"]
 
+# Load an Arrow table that must exist for metrics computation.
 function read_required_table(path::AbstractString)
     isfile(path) || error("Required file not found: $path")
     DataFrame(Arrow.Table(path))
 end
 
+# Parse the "Total Runtime" line from a Pioneer report, if present.
 function runtime_minutes_from_report(path::AbstractString)
     if !isfile(path)
         @warn "Runtime report not found; skipping runtime metric" path=path
@@ -40,6 +43,7 @@ function runtime_minutes_from_report(path::AbstractString)
     nothing
 end
 
+# Compute run counts and completeness statistics for wide-format quant tables.
 function compute_wide_metrics(
     df::DataFrame,
     quant_col_names::AbstractVector{<:Union{Symbol, String}};
@@ -73,6 +77,7 @@ function compute_wide_metrics(
     (; runs, complete_rows, data_completeness = total_cells > 0 ? non_missing_values / total_cells : 0.0)
 end
 
+# Compute median coefficient-of-variation metrics for quant tables.
 function compute_cv_metrics(
     df::DataFrame,
     quant_col_names::AbstractVector{<:Union{Symbol, String}};
@@ -133,6 +138,7 @@ function compute_cv_metrics(
     (; runs = length(all_runs), rows_evaluated = total_rows, median_cv)
 end
 
+# Normalize metric group entries from JSON config to string arrays.
 function normalize_metric_groups(groups)
     if groups isa AbstractVector
         return [String(g) for g in groups]
@@ -142,6 +148,7 @@ function normalize_metric_groups(groups)
     String[]
 end
 
+# Resolve metric groups for a dataset, honoring defaults or per-dataset overrides.
 function metric_preferences(config::Dict, dataset_name::AbstractString)
     entry = get(config, dataset_name, DEFAULT_METRIC_GROUPS)
 
@@ -154,6 +161,7 @@ function metric_preferences(config::Dict, dataset_name::AbstractString)
     (; groups)
 end
 
+# Resolve metric groups for a search, supporting list or keyed config entries.
 function metric_groups_for_search(config::Dict, search_name::AbstractString)
     entry = get(config, search_name, DEFAULT_METRIC_GROUPS)
 
@@ -169,6 +177,7 @@ function metric_groups_for_search(config::Dict, search_name::AbstractString)
 end
 
 
+# Collect dataset directories under a regression results root.
 function dataset_dirs_from_root(root::AbstractString)
     !isdir(root) && return String[]
     filter(readdir(root; join=true)) do path
@@ -176,6 +185,7 @@ function dataset_dirs_from_root(root::AbstractString)
     end
 end
 
+# Resolve the regression results root from env/args.
 function resolve_results_root()
     env_root = get(ENV, "PIONEER_RESULTS_DIR", "")
     arg_root = length(ARGS) >= 1 ? ARGS[1] : ""
@@ -189,6 +199,7 @@ function resolve_results_root()
     error("Results directory is not specified; set PIONEER_RESULTS_DIR or pass a path argument")
 end
 
+# Load a JSON config that customizes which metric groups run per dataset/search.
 function load_metrics_config(path::AbstractString)
     if isempty(path)
         @info "No metrics config provided; using defaults for all searches"
@@ -213,6 +224,7 @@ function load_metrics_config(path::AbstractString)
     end
 end
 
+# Find all search parameter JSON files under a params directory.
 function search_param_files(params_dir::AbstractString)
     !isdir(params_dir) && return String[]
     filter(readdir(params_dir; join=true)) do path
