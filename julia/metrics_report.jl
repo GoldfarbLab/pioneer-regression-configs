@@ -102,7 +102,13 @@ function collect_metrics(root::AbstractString)
         if isempty(search)
             search = "unknown-search"
         end
-        metrics_json = JSON.parsefile(path; dicttype = Dict)
+        metrics_json = nothing
+        try
+            metrics_json = JSON.parsefile(path; dicttype = Dict)
+        catch err
+            @warn "Failed to parse metrics file; leaving metrics as NA" path=path error=err
+            continue
+        end
         flat = flatten_metrics(metrics_json)
         search_entry = get!(results, search, Dict{String, Dict{String, Float64}}())
         search_entry[dataset] = flat
