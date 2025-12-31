@@ -62,7 +62,11 @@ function metrics_files(root::AbstractString)
     if !isdir(root)
         return files
     end
-    for (dir, _, filenames) in walkdir(root)
+    onerror = err -> begin
+        @warn "Skipping missing metrics directory" error = err
+        return
+    end
+    for (dir, _, filenames) in walkdir(root; onerror = onerror)
         for filename in filenames
             if startswith(filename, "metrics_") && endswith(filename, ".json")
                 push!(files, joinpath(dir, filename))
