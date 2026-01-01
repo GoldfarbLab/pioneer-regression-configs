@@ -7,10 +7,9 @@ const MAX_FDR_PLOTS = 4
 
 const NA = ""
 
-# Metrics report supports both layouts:
-# - <root>/results/<dataset>/metrics_<dataset>_<search>.json
-# - <root>/<dataset>/metrics_<dataset>_<search>.json
-# Search names are derived from the filename suffix (last underscore) in both cases.
+function Base.mapreduce(f, op, itr; by, kwargs...)
+    Base.mapreduce(x -> f(by(x)), op, itr; kwargs...)
+end
 
 function parse_version_label(label::AbstractString)
     stripped = startswith(label, "v") ? label[2:end] : label
@@ -106,101 +105,20 @@ function metrics_files(root::AbstractString)
     (; files, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
 end
 
-function truthy_env(value::AbstractString)
-    lowered = lowercase(strip(value))
-    lowered in ("1", "true", "yes", "on")
-end
-
-function parse_metrics_filename(path::AbstractString)
-    base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
-    if isempty(base)
-        return (; dataset = "", search = "", has_search = false)
-    end
-    idx = findlast('_', base)
-    if idx === nothing || idx == 1 || idx == lastindex(base)
-        return (; dataset = base, search = "", has_search = false)
-    end
-    dataset = base[1:(idx - 1)]
-    search = base[(idx + 1):end]
-    (; dataset, search, has_search = !isempty(search))
-end
-
-# Metrics filenames follow metrics_<dataset>_<search>.json; search is derived from the
-# filename suffix for both supported layouts.
-function infer_dataset_search(rel_path::AbstractString; skip_first_segment::Bool = false)
-    parts = splitpath(rel_path)
-    filename_info = parse_metrics_filename(rel_path)
-    if length(parts) == 1
-        dataset = isempty(filename_info.dataset) ? basename(rel_path) : filename_info.dataset
-        @warn "Metrics path has no directory segments; using filename dataset and unknown search" rel_path = rel_path dataset = dataset
-        return (;
-            dataset,
-            search = "unknown-search",
-            layout = "filename-only",
-            skipped_results = false,
-            filename_only = true,
-            forced_skip = skip_first_segment,
-            filename_dataset = filename_info.dataset,
-            filename_search = filename_info.search,
-        )
-    end
-
-    dataset_index = 1
-    skipped_results = false
-    if skip_first_segment && length(parts) >= 2
-        dataset_index = 2
-    elseif parts[1] == "results" && length(parts) >= 2
-        dataset_index = 2
-        skipped_results = true
-    end
-
-    dataset_dir = parts[dataset_index]
-    if endswith(dataset_dir, ".json")
-        dataset = isempty(filename_info.dataset) ? dataset_dir : filename_info.dataset
-        @warn "Metrics path missing dataset directory; using filename dataset and unknown search" rel_path = rel_path dataset = dataset
-        return (;
-            dataset,
-            search = "unknown-search",
-            layout = "filename-only",
-            skipped_results,
-            filename_only = true,
-            forced_skip = skip_first_segment,
-            filename_dataset = filename_info.dataset,
-            filename_search = filename_info.search,
-        )
-    end
-    layout = dataset_index == 2 ? "results/<dataset>" : "flat <dataset>"
-    dataset = dataset_dir
-    search = filename_info.has_search ? filename_info.search : "unknown-search"
-
-    if !isempty(filename_info.dataset) && filename_info.dataset != dataset_dir
-        @warn "Dataset name in filename does not match dataset directory; using directory name" rel_path = rel_path filename_dataset = filename_info.dataset dataset_dir = dataset_dir
-    end
-    if !filename_info.has_search
-        @warn "Metrics filename missing search suffix; using unknown-search" rel_path = rel_path dataset = dataset
-    end
-
-    (;
-        dataset,
-        search,
-        layout,
-        skipped_results,
-        filename_only = false,
-        forced_skip = skip_first_segment,
-        filename_dataset = filename_info.dataset,
-        filename_search = filename_info.search,
-    )
-end
-
-# Parse metrics paths using metrics_<dataset>_<search>.json naming and dual layouts.
-function parse_dataset_search(path::AbstractString, root::AbstractString; return_info::Bool = false)
+function parse_dataset_search(path::AbstractString, root::AbstractString)
     rel_path = relpath(path, root)
-    skip_first_segment = truthy_env(get(ENV, "PIONEER_REPORT_SKIP_FIRST_SEGMENT", "false"))
-    info = infer_dataset_search(rel_path; skip_first_segment = skip_first_segment)
-    if return_info
-        return info.dataset, info.search, info
+    parts = splitpath(rel_path)
+    search = length(parts) >= 3 ? parts[1] : ""
+    dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
+    base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
+    if !isempty(dataset_dir)
+        prefix = dataset_dir * "_"
+        if startswith(base, prefix)
+            return dataset_dir, base[length(prefix) + 1:end]
+        end
+        return dataset_dir, search
     end
-    info.dataset, info.search
+    base, search
 end
 
 function collect_metrics(root::AbstractString)
