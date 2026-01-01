@@ -585,7 +585,7 @@ function write_fold_change_table(
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h3>", html_escape("fold_change.error." * group), "</h3>")
 
-    header_parts = vcat(["Search", "Species", "Condition"], versions)
+    header_parts = vcat(["Dataset", "Species", "Condition"], versions)
     if length(versions) > 1
         append!(
             header_parts,
@@ -645,7 +645,7 @@ function write_fold_change_table(
         end
 
         row_parts = vcat(
-            [search, format_species_label(species), format_condition_label(condition)],
+            [dataset, format_species_label(species), format_condition_label(condition)],
             [format_value(value) for value in values],
             deltas,
         )
@@ -686,7 +686,7 @@ function write_fold_change_fc_variance_table(
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h3>", html_escape("fold_change.variance." * group), "</h3>")
 
-    header_parts = vcat(["Search", "Species", "Condition"], versions)
+    header_parts = vcat(["Dataset", "Species", "Condition"], versions)
     if length(versions) > 1
         append!(
             header_parts,
@@ -746,7 +746,7 @@ function write_fold_change_fc_variance_table(
         end
 
         row_parts = vcat(
-            [search, format_species_label(species), format_condition_label(condition)],
+            [dataset, format_species_label(species), format_condition_label(condition)],
             [format_value(value) for value in values],
             deltas,
         )
@@ -787,7 +787,7 @@ function write_keap1_table(
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h3>", html_escape("keap1." * group), "</h3>")
 
-    header_parts = vcat(["Search", "Gene", "Run"], versions)
+    header_parts = vcat(["Dataset", "Gene", "Run"], versions)
     if length(versions) > 1
         append!(
             header_parts,
@@ -838,7 +838,7 @@ function write_keap1_table(
         end
 
         row_parts = vcat(
-            [search, gene, run],
+            [dataset, gene, run],
             [format_value(value) for value in values],
             deltas,
         )
@@ -956,7 +956,7 @@ function build_report(
         end
         println(buffer, "<div class=\"metric-block\">")
         println(buffer, "<h3>Metric: ", html_escape(metric), "</h3>")
-        header_parts = vcat(["Search"], versions)
+        header_parts = vcat(["Dataset"], versions)
         if length(versions) > 1
             current_version = versions[end]
             previous_versions = versions[1:(end - 1)]
@@ -1037,7 +1037,7 @@ function build_report(
             end
 
             row_parts = vcat(
-                [search],
+                [dataset],
                 [format_value(value) for value in values],
                 deltas,
                 percent_deltas,
