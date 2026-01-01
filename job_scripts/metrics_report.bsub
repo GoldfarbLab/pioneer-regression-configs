@@ -19,12 +19,12 @@ export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-1}
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_dir="${RUN_DIR%/}/regression-config"
+repo_dir="${RUN_DIR%/}/regression-configs"
 report_project="${repo_dir}/julia"
 report_script="${report_project}/metrics_report.jl"
 if [[ ! -f "$report_script" ]]; then
     echo "ERROR: metrics report script not found at ${report_script}" >&2
-    echo "Ensure the regression-config repo is available at ${repo_dir} inside the container." >&2
+    echo "Ensure the regression-configs repo is available at ${repo_dir} inside the container." >&2
     exit 1
 fi
 
