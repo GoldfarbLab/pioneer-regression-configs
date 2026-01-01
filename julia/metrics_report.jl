@@ -106,7 +106,7 @@ function parse_dataset_search(path::AbstractString, root::AbstractString; layout
     parts = splitpath(rel_path)
     base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
     dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
-    search = layout == :results ? (length(parts) >= 4 ? parts[2] : "") : (length(parts) >= 3 ? parts[1] : "")
+    search = ""
 
     dataset_from_name = ""
     search_from_name = ""
@@ -119,7 +119,7 @@ function parse_dataset_search(path::AbstractString, root::AbstractString; layout
     if !isempty(dataset_dir)
         prefix = dataset_dir * "_"
         if startswith(base, prefix)
-            search = isempty(search) ? base[length(prefix) + 1:end] : search
+            search = base[length(prefix) + 1:end]
         end
         dataset = dataset_dir
     else
@@ -127,7 +127,7 @@ function parse_dataset_search(path::AbstractString, root::AbstractString; layout
     end
 
     if isempty(search) && !isempty(search_from_name)
-        search = search_from_name
+        search = "search_" * search_from_name
     end
 
     dataset, search
@@ -1555,15 +1555,6 @@ function write_keap1_tables(
     end
 end
 
-function layout_summary_line(layout_by_version::Dict{String, String}, versions::Vector{String})
-    entries = String[]
-    for version in versions
-        layout = get(layout_by_version, version, "unknown")
-        push!(entries, string(version, ": ", layout))
-    end
-    join(entries, " · ")
-end
-
 function build_report(
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
@@ -1581,12 +1572,6 @@ function build_report(
         buffer,
         "<p><strong>Versions:</strong> ",
         html_escape(join(versions, ", ")),
-        "</p>",
-    )
-    println(
-        buffer,
-        "<p><strong>Detected metrics layout:</strong> ",
-        html_escape(layout_summary_line(layout_by_version, versions)),
         "</p>",
     )
     println(buffer, "</div>")
@@ -1807,7 +1792,9 @@ function main()
     isempty(release_root) && error("PIONEER_METRICS_RELEASE_ROOT not set")
     isempty(develop_root) && error("PIONEER_METRICS_DEVELOP_ROOT not set")
     isempty(current_root) && error("PIONEER_METRICS_CURRENT_ROOT not set")
-    isempty(output_path) && error("PIONEER_REPORT_OUTPUT not set")
+    if isempty(html_output_path) && isempty(output_path)
+        error("PIONEER_HTML_REPORT_OUTPUT not set and PIONEER_REPORT_OUTPUT not set")
+    end
 
     versions = sorted_release_versions(release_root)
     push!(versions, "develop")
@@ -1841,25 +1828,21 @@ function main()
 
     banner = warning_needed ? "Parsed metrics paths required layout adjustments; verify the metrics root and filename conventions." : ""
     report = build_report(version_data, versions, layout_by_version, banner)
-    report_page = build_metrics_report_page(report)
-
     if isempty(html_output_path)
         base, _ = splitext(output_path)
         html_output_path = base * ".html"
     end
 
-    open(output_path, "w") do io
-        write(io, report_page)
-    end
-
+    plots_by_search = Dict{String, Dict{String, Vector{String}}}()
     if isdir(plots_root)
         plots_by_search = collect_fdr_plots(plots_root; layout = :results)
-        html_report = build_html_report(plots_by_search, html_output_path, report)
-        open(html_output_path, "w") do io
-            write(io, html_report)
-        end
     else
-        @warn "Plots root not found; skipping HTML report" plots_root=plots_root
+        @warn "Plots root not found; writing HTML report without plots" plots_root=plots_root
+    end
+
+    html_report = build_html_report(plots_by_search, html_output_path, report)
+    open(html_output_path, "w") do io
+        write(io, html_report)
     end
 end
 
