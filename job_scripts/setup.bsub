@@ -21,6 +21,7 @@ fi
 
 : "${PIONEER_DIR:?PIONEER_DIR not set}"
 : "${PIONEER_ENTRAPMENT_DIR:?PIONEER_ENTRAPMENT_DIR not set}"
+export PIONEER_DIR PIONEER_ENTRAPMENT_DIR
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 mkdir -p "$JULIA_DEPOT_PATH"

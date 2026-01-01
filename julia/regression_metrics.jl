@@ -461,7 +461,7 @@ function main()
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
 
     if isempty(params_dir_override) && !isempty(archive_root) && !isempty(dataset_name)
-        params_dir_override = joinpath(archive_root, "adjusted-params", dataset_name)
+        params_dir_override = joinpath(archive_root, "regression-configs", "params", dataset_name)
     end
 
     if !isempty(params_dir_override)
