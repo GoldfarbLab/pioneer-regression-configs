@@ -457,11 +457,32 @@ end
 
 function main()
     params_dir_override = get(ENV, "PIONEER_PARAMS_DIR", "")
+    archive_root = get(ENV, "PIONEER_ARCHIVE_ROOT", "")
+    dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
+
+    if isempty(params_dir_override) && !isempty(archive_root) && !isempty(dataset_name)
+        params_dir_override = joinpath(archive_root, "adjusted-params", dataset_name)
+    end
+
     if !isempty(params_dir_override)
+        if isempty(archive_root)
+            archive_root = normpath(joinpath(params_dir_override, "..", ".."))
+        end
+
         metrics_config_path = get(ENV, "PIONEER_METRICS_FILE", "")
+        if isempty(metrics_config_path)
+            metrics_config_path = joinpath(params_dir_override, "metrics.json")
+        end
+
         experimental_design_path = get(ENV, "PIONEER_EXPERIMENTAL_DESIGN", "")
+        if isempty(experimental_design_path)
+            experimental_design_path = params_dir_override
+        end
+
         three_proteome_designs_path = get(ENV, "PIONEER_THREE_PROTEOME_DESIGNS", "")
-        archive_root = get(ENV, "PIONEER_ARCHIVE_ROOT", "")
+        if isempty(three_proteome_designs_path)
+            three_proteome_designs_path = experimental_design_path
+        end
 
         compute_metrics_for_params_dir(
             params_dir_override;

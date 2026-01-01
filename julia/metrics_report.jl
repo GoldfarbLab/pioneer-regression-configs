@@ -1683,8 +1683,16 @@ function main()
     release_root = get(ENV, "PIONEER_METRICS_RELEASE_ROOT", "")
     develop_root = get(ENV, "PIONEER_METRICS_DEVELOP_ROOT", "")
     current_root = get(ENV, "PIONEER_METRICS_CURRENT_ROOT", "")
+    metrics_root = get(ENV, "PIONEER_METRICS_ROOT", "")
     output_path = get(ENV, "PIONEER_REPORT_OUTPUT", "")
     html_output_path = get(ENV, "PIONEER_HTML_REPORT_OUTPUT", "")
+
+    if !isempty(metrics_root)
+        isempty(release_root) && (release_root = joinpath(metrics_root, "release"))
+        isempty(develop_root) && (develop_root = joinpath(metrics_root, "develop"))
+        isempty(current_root) && (current_root = joinpath(metrics_root, "current"))
+    end
+
     plots_root = get(ENV, "PIONEER_FDR_PLOTS_ROOT", current_root)
 
     isempty(release_root) && error("PIONEER_METRICS_RELEASE_ROOT not set")
