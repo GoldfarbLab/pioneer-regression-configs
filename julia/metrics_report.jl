@@ -7,10 +7,6 @@ const MAX_FDR_PLOTS = 4
 
 const NA = ""
 
-function Base.mapreduce(f, op, itr; by, kwargs...)
-    Base.mapreduce(x -> f(by(x)), op, itr; kwargs...)
-end
-
 function parse_version_label(label::AbstractString)
     stripped = startswith(label, "v") ? label[2:end] : label
     parts = split(stripped, '.')
@@ -105,38 +101,46 @@ function metrics_files(root::AbstractString)
     (; files, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
 end
 
-function parse_dataset_search(path::AbstractString, root::AbstractString)
+function parse_dataset_search(path::AbstractString, root::AbstractString; layout::Symbol)
     rel_path = relpath(path, root)
     parts = splitpath(rel_path)
-    search = length(parts) >= 3 ? parts[1] : ""
-    dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
     base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
+    dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
+    search = layout == :results ? (length(parts) >= 4 ? parts[2] : "") : (length(parts) >= 3 ? parts[1] : "")
+
+    dataset_from_name = ""
+    search_from_name = ""
+    matched = match(r"^(.+)_search_(.+)$", base)
+    if matched !== nothing
+        dataset_from_name = matched.captures[1]
+        search_from_name = matched.captures[2]
+    end
+
     if !isempty(dataset_dir)
         prefix = dataset_dir * "_"
         if startswith(base, prefix)
-            return dataset_dir, base[length(prefix) + 1:end]
+            search = isempty(search) ? base[length(prefix) + 1:end] : search
         end
-        return dataset_dir, search
+        dataset = dataset_dir
+    else
+        dataset = isempty(dataset_from_name) ? base : dataset_from_name
     end
-    base, search
+
+    if isempty(search) && !isempty(search_from_name)
+        search = search_from_name
+    end
+
+    dataset, search
 end
 
-function collect_metrics(root::AbstractString)
+function collect_metrics(root::AbstractString; layout::Symbol)
     results = Dict{String, Dict{String, Dict{String, Float64}}}()
     summary = metrics_files(root)
     metrics_count = length(summary.files)
-    layout_counts = Dict{String, Int}()
-    skipped_results_count = 0
-    filename_only_count = 0
-    forced_skip_count = 0
     duplicate_count = 0
     searches_seen = String[]
     for path in summary.files
-        dataset, search, info = parse_dataset_search(path, root; return_info = true)
-        layout_counts[info.layout] = get(layout_counts, info.layout, 0) + 1
-        skipped_results_count += info.skipped_results ? 1 : 0
-        filename_only_count += info.filename_only ? 1 : 0
-        forced_skip_count += info.forced_skip ? 1 : 0
+        dataset, search = parse_dataset_search(path, root; layout = layout)
         push!(searches_seen, search)
 
         metrics_json = nothing
@@ -165,21 +169,14 @@ function collect_metrics(root::AbstractString)
         end
     end
 
-    layout_summary = if !isempty(layout_counts)
-        maximum(collect(keys(layout_counts)); by = key -> layout_counts[key])
-    else
-        summary.layout
-    end
-    warning_needed = skipped_results_count > 0 || filename_only_count > 0 || forced_skip_count > 0
+    layout_summary = layout == :results ? "results/<dataset>" : "flat <dataset>"
+    warning_needed = false
     return (;
         results,
         metrics_count,
         layout = layout_summary,
         scan_root = summary.scan_root,
         mixed_layout = summary.mixed_layout,
-        skipped_results_count,
-        filename_only_count,
-        forced_skip_count,
         duplicate_count,
         warning_needed,
     )
@@ -194,7 +191,8 @@ function run_parse_check()
     ]
     println("Parsing sample metrics paths:")
     for path in samples
-        dataset, search = parse_dataset_search(path, sample_root)
+        layout = occursin(joinpath(sample_root, "results"), path) ? :results : :flat
+        dataset, search = parse_dataset_search(path, sample_root; layout = layout)
         println("  ", path, " -> dataset=", dataset, ", search=", search)
     end
 end
@@ -294,10 +292,10 @@ function fdr_plot_paths(metrics_dir::AbstractString)
     plots
 end
 
-function collect_fdr_plots(root::AbstractString)
+function collect_fdr_plots(root::AbstractString; layout::Symbol)
     plots_by_search = Dict{String, Dict{String, Vector{String}}}()
     for path in metrics_files(root)
-        dataset, search = parse_dataset_search(path, root)
+        dataset, search = parse_dataset_search(path, root; layout = layout)
         isempty(search) && continue
         plots = fdr_plot_paths(dirname(path))
         isempty(plots) && continue
@@ -1790,7 +1788,7 @@ function main()
     metrics_root = get(ENV, "PIONEER_METRICS_ROOT", "")
     output_path = get(ENV, "PIONEER_REPORT_OUTPUT", "")
     html_output_path = get(ENV, "PIONEER_HTML_REPORT_OUTPUT", "")
-    parse_check = truthy_env(get(ENV, "PIONEER_REPORT_PARSE_CHECK", "false"))
+    parse_check = get(ENV, "PIONEER_REPORT_PARSE_CHECK", "false") == "true"
 
     if parse_check
         run_parse_check()
@@ -1819,20 +1817,20 @@ function main()
     warning_needed = false
     for version in versions
         if version == "develop"
-            summary = collect_metrics(develop_root)
+            summary = collect_metrics(develop_root; layout = :flat)
             version_data[version] = summary.results
             layout_by_version[version] = summary.layout
             warning_needed |= summary.warning_needed
             @info "Collected metrics" version = version root = develop_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
         elseif version == "current"
-            summary = collect_metrics(current_root)
+            summary = collect_metrics(current_root; layout = :results)
             version_data[version] = summary.results
             layout_by_version[version] = summary.layout
             warning_needed |= summary.warning_needed
             @info "Collected metrics" version = version root = current_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
         else
             version_root = joinpath(release_root, version)
-            summary = collect_metrics(version_root)
+            summary = collect_metrics(version_root; layout = :flat)
             version_data[version] = summary.results
             layout_by_version[version] = summary.layout
             warning_needed |= summary.warning_needed
@@ -1854,7 +1852,7 @@ function main()
     end
 
     if isdir(plots_root)
-        plots_by_search = collect_fdr_plots(plots_root)
+        plots_by_search = collect_fdr_plots(plots_root; layout = :results)
         html_report = build_html_report(plots_by_search, html_output_path, report)
         open(html_output_path, "w") do io
             write(io, html_report)
