@@ -12,26 +12,16 @@
 
 set -euo pipefail
 
-if [[ -z "${PIONEER_DIR:-}" || -z "${PIONEER_ENTRAPMENT_DIR:-}" ]]; then
-    : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
-    archive_root="${PIONEER_ARCHIVE_ROOT%/}"
-    PIONEER_DIR="${PIONEER_DIR:-${archive_root}/pioneer}"
-    PIONEER_ENTRAPMENT_DIR="${PIONEER_ENTRAPMENT_DIR:-${archive_root}/PioneerEntrapment.jl}"
-fi
-
-: "${PIONEER_DIR:?PIONEER_DIR not set}"
-: "${PIONEER_ENTRAPMENT_DIR:?PIONEER_ENTRAPMENT_DIR not set}"
+: "${RUN_DIR:?RUN_DIR not set}"
+RUN_DIR="${RUN_DIR%/}"
+PIONEER_DIR="${RUN_DIR}/pioneer"
+PIONEER_ENTRAPMENT_DIR="${RUN_DIR}/PioneerEntrapment.jl"
 export PIONEER_DIR PIONEER_ENTRAPMENT_DIR
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 mkdir -p "$JULIA_DEPOT_PATH"
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
-if [[ -z "$repo_dir" ]]; then
-    repo_dir="$(cd "${script_dir}/.." && pwd)"
-fi
-metrics_project="${repo_dir}/julia"
+metrics_project="${RUN_DIR}/regression-configs/julia"
 
 JULIA=/usr/local/julia/bin/julia
 

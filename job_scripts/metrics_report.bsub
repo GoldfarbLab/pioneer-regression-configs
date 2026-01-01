@@ -13,34 +13,18 @@
 
 set -euo pipefail
 
-if [[ -z "${PIONEER_METRICS_RELEASE_ROOT:-}" || -z "${PIONEER_METRICS_DEVELOP_ROOT:-}" || -z "${PIONEER_METRICS_CURRENT_ROOT:-}" ]]; then
-    : "${PIONEER_METRICS_ROOT:?PIONEER_METRICS_ROOT not set}"
-    metrics_root="${PIONEER_METRICS_ROOT%/}"
-    # Point PIONEER_METRICS_ROOT at <run_id> for results/<dataset> layouts, or <run_id>/<results_root>
-    # for flat <dataset> layouts; the derived release/develop/current roots should match the layout in use.
-    PIONEER_METRICS_RELEASE_ROOT="${PIONEER_METRICS_RELEASE_ROOT:-${metrics_root}/release}"
-    PIONEER_METRICS_DEVELOP_ROOT="${PIONEER_METRICS_DEVELOP_ROOT:-${metrics_root}/develop}"
-    PIONEER_METRICS_CURRENT_ROOT="${PIONEER_METRICS_CURRENT_ROOT:-${metrics_root}/current}"
-fi
-
-: "${PIONEER_METRICS_RELEASE_ROOT:?PIONEER_METRICS_RELEASE_ROOT not set}"
-: "${PIONEER_METRICS_DEVELOP_ROOT:?PIONEER_METRICS_DEVELOP_ROOT not set}"
-: "${PIONEER_METRICS_CURRENT_ROOT:?PIONEER_METRICS_CURRENT_ROOT not set}"
-: "${PIONEER_REPORT_OUTPUT:?PIONEER_REPORT_OUTPUT not set}"
+: "${RUN_DIR:?RUN_DIR not set}"
 
 export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-1}
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
-if [[ -z "$repo_dir" ]]; then
-    repo_dir="$(cd "${script_dir}/.." && pwd)"
-fi
+repo_dir="${RUN_DIR%/}/regression-config"
 report_project="${repo_dir}/julia"
 report_script="${report_project}/metrics_report.jl"
 if [[ ! -f "$report_script" ]]; then
     echo "ERROR: metrics report script not found at ${report_script}" >&2
-    echo "Set PIONEER_REGRESSION_CONFIGS_DIR to the repo root and ensure it is mounted in the container." >&2
+    echo "Ensure the regression-config repo is available at ${repo_dir} inside the container." >&2
     exit 1
 fi
 
