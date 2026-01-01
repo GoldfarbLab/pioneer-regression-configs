@@ -7,6 +7,10 @@ const MAX_FDR_PLOTS = 4
 
 const NA = ""
 
+function Base.mapreduce(f, op, itr; by, kwargs...)
+    Base.mapreduce(x -> f(by(x)), op, itr; kwargs...)
+end
+
 function parse_version_label(label::AbstractString)
     stripped = startswith(label, "v") ? label[2:end] : label
     parts = split(stripped, '.')
@@ -79,24 +83,17 @@ end
 function parse_dataset_search(path::AbstractString, root::AbstractString)
     rel_path = relpath(path, root)
     parts = splitpath(rel_path)
-    search = length(parts) >= 2 ? parts[1] : ""
+    search = length(parts) >= 3 ? parts[1] : ""
+    dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
     base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
-    if isempty(search) && occursin("_", base)
-        chunks = split(base, "_")
-        if length(chunks) >= 2
-            search = chunks[end]
-            dataset = join(chunks[1:end-1], "_")
-            return dataset, search
+    if !isempty(dataset_dir)
+        prefix = dataset_dir * "_"
+        if startswith(base, prefix)
+            return dataset_dir, base[length(prefix) + 1:end]
         end
+        return dataset_dir, search
     end
-    dataset = base
-    if !isempty(search)
-        suffix = "_" * search
-        if endswith(dataset, suffix)
-            dataset = dataset[1:end - length(suffix)]
-        end
-    end
-    dataset, search
+    base, search
 end
 
 function collect_metrics(root::AbstractString)

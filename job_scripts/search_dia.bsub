@@ -22,7 +22,7 @@ fi
 if [[ "${PARAM_FILE}" != /* ]]; then
     : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
     : "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
-    PARAM_FILE="${PIONEER_ARCHIVE_ROOT%/}/adjusted-params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
+    PARAM_FILE="${PIONEER_ARCHIVE_ROOT%/}/regression-configs/params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 fi
 
 export JULIA_NUM_THREADS=16
