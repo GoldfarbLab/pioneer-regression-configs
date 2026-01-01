@@ -60,53 +60,30 @@ end
 function metrics_files(root::AbstractString)
     files = String[]
     if !isdir(root)
-        return (; files, scan_root = root, layout = "unknown", mixed_layout = false)
+        return (; files, scan_root = root)
     end
     onerror = err -> begin
         @warn "Skipping missing metrics directory" error = err
         return
     end
 
-    function collect_files(search_root::AbstractString; skip_results::Bool = false)
-        collected = String[]
-        for (dir, dirs, filenames) in walkdir(search_root; onerror = onerror)
-            if skip_results && dir == search_root
-                filter!(name -> name != "results", dirs)
-            end
-            for filename in filenames
-                if startswith(filename, "metrics_") && endswith(filename, ".json")
-                    push!(collected, joinpath(dir, filename))
-                end
+    for (dir, _, filenames) in walkdir(root; onerror = onerror)
+        for filename in filenames
+            if startswith(filename, "metrics_") && endswith(filename, ".json")
+                push!(files, joinpath(dir, filename))
             end
         end
-        collected
     end
 
-    results_dir = joinpath(root, "results")
-    files_in_root = collect_files(root; skip_results = true)
-    files_in_results = isdir(results_dir) ? collect_files(results_dir) : String[]
-
-    if !isempty(files_in_results) && !isempty(files_in_root)
-        @warn "Found metrics in both results and flat layouts; prioritizing results subtree" root = root results_count = length(files_in_results) flat_count = length(files_in_root)
-        return (; files = files_in_results, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = true)
-    elseif !isempty(files_in_results)
-        return (; files = files_in_results, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = false)
-    elseif !isempty(files_in_root)
-        return (; files = files_in_root, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
-    end
-
-    if isdir(results_dir)
-        return (; files, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = false)
-    end
-    (; files, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
+    (; files, scan_root = root)
 end
 
-function parse_dataset_search(path::AbstractString, root::AbstractString; layout::Symbol)
+function parse_dataset_search(path::AbstractString, root::AbstractString)
     rel_path = relpath(path, root)
     parts = splitpath(rel_path)
     base = replace(basename(path), r"^metrics_" => "", r"\.json$" => "")
     dataset_dir = length(parts) >= 2 ? parts[end - 1] : ""
-    search = layout == :results ? (length(parts) >= 4 ? parts[2] : "") : (length(parts) >= 3 ? parts[1] : "")
+    search = ""
 
     dataset_from_name = ""
     search_from_name = ""
@@ -119,7 +96,7 @@ function parse_dataset_search(path::AbstractString, root::AbstractString; layout
     if !isempty(dataset_dir)
         prefix = dataset_dir * "_"
         if startswith(base, prefix)
-            search = isempty(search) ? base[length(prefix) + 1:end] : search
+            search = base[length(prefix) + 1:end]
         end
         dataset = dataset_dir
     else
@@ -127,20 +104,20 @@ function parse_dataset_search(path::AbstractString, root::AbstractString; layout
     end
 
     if isempty(search) && !isempty(search_from_name)
-        search = search_from_name
+        search = "search_" * search_from_name
     end
 
     dataset, search
 end
 
-function collect_metrics(root::AbstractString; layout::Symbol)
+function collect_metrics(root::AbstractString)
     results = Dict{String, Dict{String, Dict{String, Float64}}}()
     summary = metrics_files(root)
     metrics_count = length(summary.files)
     duplicate_count = 0
     searches_seen = String[]
     for path in summary.files
-        dataset, search = parse_dataset_search(path, root; layout = layout)
+        dataset, search = parse_dataset_search(path, root)
         push!(searches_seen, search)
 
         metrics_json = nothing
@@ -169,16 +146,11 @@ function collect_metrics(root::AbstractString; layout::Symbol)
         end
     end
 
-    layout_summary = layout == :results ? "results/<dataset>" : "flat <dataset>"
-    warning_needed = false
     return (;
         results,
         metrics_count,
-        layout = layout_summary,
         scan_root = summary.scan_root,
-        mixed_layout = summary.mixed_layout,
         duplicate_count,
-        warning_needed,
     )
 end
 
@@ -191,8 +163,7 @@ function run_parse_check()
     ]
     println("Parsing sample metrics paths:")
     for path in samples
-        layout = occursin(joinpath(sample_root, "results"), path) ? :results : :flat
-        dataset, search = parse_dataset_search(path, sample_root; layout = layout)
+        dataset, search = parse_dataset_search(path, sample_root)
         println("  ", path, " -> dataset=", dataset, ", search=", search)
     end
 end
@@ -1555,38 +1526,18 @@ function write_keap1_tables(
     end
 end
 
-function layout_summary_line(layout_by_version::Dict{String, String}, versions::Vector{String})
-    entries = String[]
-    for version in versions
-        layout = get(layout_by_version, version, "unknown")
-        push!(entries, string(version, ": ", layout))
-    end
-    join(entries, " · ")
-end
-
 function build_report(
     version_data::AbstractDict{String, Any},
     versions::Vector{String},
-    layout_by_version::Dict{String, String},
-    warning_banner::AbstractString,
 )
     buffer = IOBuffer()
     table_counter = Ref(0)
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h2>Regression Metrics Report</h2>")
-    if !isempty(warning_banner)
-        println(buffer, "<div class=\"warning-banner\">", html_escape(warning_banner), "</div>")
-    end
     println(
         buffer,
         "<p><strong>Versions:</strong> ",
         html_escape(join(versions, ", ")),
-        "</p>",
-    )
-    println(
-        buffer,
-        "<p><strong>Detected metrics layout:</strong> ",
-        html_escape(layout_summary_line(layout_by_version, versions)),
         "</p>",
     )
     println(buffer, "</div>")
@@ -1799,7 +1750,7 @@ function main()
     if !isempty(metrics_root)
         isempty(release_root) && (release_root = joinpath(metrics_root, "release"))
         isempty(develop_root) && (develop_root = joinpath(metrics_root, "develop"))
-        isempty(current_root) && (current_root = joinpath(metrics_root, "current"))
+        isempty(current_root) && (current_root = joinpath(metrics_root, "results"))
     end
 
     plots_root = get(ENV, "PIONEER_FDR_PLOTS_ROOT", current_root)
@@ -1807,59 +1758,48 @@ function main()
     isempty(release_root) && error("PIONEER_METRICS_RELEASE_ROOT not set")
     isempty(develop_root) && error("PIONEER_METRICS_DEVELOP_ROOT not set")
     isempty(current_root) && error("PIONEER_METRICS_CURRENT_ROOT not set")
-    isempty(output_path) && error("PIONEER_REPORT_OUTPUT not set")
+    if isempty(html_output_path) && isempty(output_path)
+        error("PIONEER_HTML_REPORT_OUTPUT not set and PIONEER_REPORT_OUTPUT not set")
+    end
 
     versions = sorted_release_versions(release_root)
     push!(versions, "develop")
     push!(versions, "current")
 
     version_data = Dict{String, Any}()
-    layout_by_version = Dict{String, String}()
-    warning_needed = false
     for version in versions
         if version == "develop"
-            summary = collect_metrics(develop_root; layout = :flat)
+            summary = collect_metrics(develop_root)
             version_data[version] = summary.results
-            layout_by_version[version] = summary.layout
-            warning_needed |= summary.warning_needed
-            @info "Collected metrics" version = version root = develop_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
+            @info "Collected metrics" version = version root = develop_root count = summary.metrics_count scan_root = summary.scan_root
         elseif version == "current"
-            summary = collect_metrics(current_root; layout = :results)
+            summary = collect_metrics(current_root)
             version_data[version] = summary.results
-            layout_by_version[version] = summary.layout
-            warning_needed |= summary.warning_needed
-            @info "Collected metrics" version = version root = current_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
+            @info "Collected metrics" version = version root = current_root count = summary.metrics_count scan_root = summary.scan_root
         else
             version_root = joinpath(release_root, version)
-            summary = collect_metrics(version_root; layout = :flat)
+            summary = collect_metrics(version_root)
             version_data[version] = summary.results
-            layout_by_version[version] = summary.layout
-            warning_needed |= summary.warning_needed
-            @info "Collected metrics" version = version root = version_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
+            @info "Collected metrics" version = version root = version_root count = summary.metrics_count scan_root = summary.scan_root
         end
     end
 
-    banner = warning_needed ? "Parsed metrics paths required layout adjustments; verify the metrics root and filename conventions." : ""
-    report = build_report(version_data, versions, layout_by_version, banner)
-    report_page = build_metrics_report_page(report)
-
+    report = build_report(version_data, versions)
     if isempty(html_output_path)
         base, _ = splitext(output_path)
         html_output_path = base * ".html"
     end
 
-    open(output_path, "w") do io
-        write(io, report_page)
-    end
-
+    plots_by_search = Dict{String, Dict{String, Vector{String}}}()
     if isdir(plots_root)
         plots_by_search = collect_fdr_plots(plots_root; layout = :results)
-        html_report = build_html_report(plots_by_search, html_output_path, report)
-        open(html_output_path, "w") do io
-            write(io, html_report)
-        end
     else
-        @warn "Plots root not found; skipping HTML report" plots_root=plots_root
+        @warn "Plots root not found; writing HTML report without plots" plots_root=plots_root
+    end
+
+    html_report = build_html_report(plots_by_search, html_output_path, report)
+    open(html_output_path, "w") do io
+        write(io, html_report)
     end
 end
 
