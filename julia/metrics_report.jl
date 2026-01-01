@@ -987,6 +987,17 @@ function format_delta(current, previous)
     NA
 end
 
+function format_abs_delta(current, previous)
+    if current === missing || previous === missing || current === nothing || previous === nothing
+        return NA
+    elseif current isa Number && previous isa Number
+        delta = abs(Float64(current)) - abs(Float64(previous))
+        formatted = format_number(abs(delta))
+        return delta >= 0 ? "+" * formatted : "-" * formatted
+    end
+    NA
+end
+
 function format_percent_delta(current, previous)
     if current === missing || previous === missing || current === nothing || previous === nothing
         return NA
@@ -1236,7 +1247,7 @@ function write_fold_change_table(
         if length(values) > 1
             prev_value = values[1]
             for idx in 2:length(values)
-                push!(deltas, format_delta(values[idx], prev_value))
+                push!(deltas, format_abs_delta(values[idx], prev_value))
                 prev_value = values[idx]
             end
         end
