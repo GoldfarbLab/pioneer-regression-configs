@@ -257,12 +257,17 @@ function results_dir_from_param(path::AbstractString)
 end
 
 function dataset_name_from_results(results_dir::AbstractString)
-    parent_dir = dirname(results_dir)
-    if isempty(parent_dir) || parent_dir == results_dir
-        return basename(results_dir)
+    base = basename(results_dir)
+    if isempty(base) || base == "." || base == ".."
+        parent_dir = dirname(results_dir)
+        if isempty(parent_dir) || parent_dir == results_dir
+            return base
+        end
+
+        return basename(parent_dir)
     end
 
-    basename(parent_dir)
+    base
 end
 
 function output_metrics_path(results_dir::AbstractString, dataset_name::AbstractString, search_name::AbstractString)
