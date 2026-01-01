@@ -294,7 +294,8 @@ end
 
 function collect_fdr_plots(root::AbstractString; layout::Symbol)
     plots_by_search = Dict{String, Dict{String, Vector{String}}}()
-    for path in metrics_files(root)
+    summary = metrics_files(root)
+    for path in summary.files
         dataset, search = parse_dataset_search(path, root; layout = layout)
         isempty(search) && continue
         plots = fdr_plot_paths(dirname(path))
