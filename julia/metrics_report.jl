@@ -264,15 +264,36 @@ function fdr_plot_paths(metrics_dir::AbstractString)
     plots
 end
 
-function collect_fdr_plots(root::AbstractString; layout::Symbol)
+function collect_png_paths(root::AbstractString)
+    plots = String[]
+    if !isdir(root)
+        return plots
+    end
+    onerror = err -> begin
+        @warn "Skipping missing plot directory" error = err
+        return
+    end
+    for (dir, _, filenames) in walkdir(root; onerror = onerror)
+        for filename in filenames
+            if endswith(lowercase(filename), ".png")
+                push!(plots, joinpath(dir, filename))
+            end
+        end
+    end
+    unique!(plots)
+    sort!(plots)
+    plots
+end
+
+function collect_fdr_plots(root::AbstractString)
     plots_by_search = Dict{String, Dict{String, Vector{String}}}()
-    summary = metrics_files(root)
-    for path in summary.files
-        dataset, search = parse_dataset_search(path, root; layout = layout)
-        isempty(search) && continue
-        plots = fdr_plot_paths(dirname(path))
+    search_entry = get!(plots_by_search, "results", Dict{String, Vector{String}}())
+    for entry in readdir(root; join = true)
+        isdir(entry) || continue
+        basename(entry) == "fdr_plots" && continue
+        dataset = basename(entry)
+        plots = collect_png_paths(entry)
         isempty(plots) && continue
-        search_entry = get!(plots_by_search, search, Dict{String, Vector{String}}())
         search_entry[dataset] = plots
     end
     plots_by_search
@@ -1081,7 +1102,7 @@ function main()
     develop_root = normpath(joinpath(run_dir, "..", "metrics", "develop"))
     current_root = joinpath(run_dir, "results")
 
-    plots_root = joinpath(run_dir, "results", "fdr_plots")
+    plots_scan_root = current_root
     html_output_path = joinpath(run_dir, "results", "metrics_report.html")
 
     versions = sorted_release_versions(release_root)
@@ -1108,10 +1129,10 @@ function main()
 
     report = build_report(version_data, versions)
     plots_by_search = Dict{String, Dict{String, Vector{String}}}()
-    if isdir(plots_root)
-        plots_by_search = collect_fdr_plots(plots_root; layout = :results)
+    if isdir(plots_scan_root)
+        plots_by_search = collect_fdr_plots(plots_scan_root)
     else
-        @warn "Plots root not found; writing HTML report without plots" plots_root=plots_root
+        @warn "Plots root not found; writing HTML report without plots" plots_root=plots_scan_root
     end
 
     html_report = build_html_report(plots_by_search, html_output_path, report)
