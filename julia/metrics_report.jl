@@ -155,20 +155,6 @@ function collect_metrics(root::AbstractString)
     )
 end
 
-function run_parse_check()
-    sample_root = "/tmp/pioneer-metrics-root"
-    samples = [
-        joinpath(sample_root, "results", "Example_Dataset", "metrics_Example_Dataset_search_alpha.json"),
-        joinpath(sample_root, "Example_Dataset", "metrics_Example_Dataset_search_alpha.json"),
-        joinpath(sample_root, "results", "MTAC_Yeast_Alternating_5min", "metrics_MTAC_Yeast_Alternating_5min_search_entrap.json"),
-    ]
-    println("Parsing sample metrics paths:")
-    for path in samples
-        dataset, search = parse_dataset_search(path, sample_root)
-        println("  ", path, " -> dataset=", dataset, ", search=", search)
-    end
-end
-
 function slugify_label(label::AbstractString)
     replace(label, r"[^A-Za-z0-9_-]" => "_")
 end
@@ -1089,33 +1075,14 @@ function build_report(
 end
 
 function main()
-    release_root = get(ENV, "PIONEER_METRICS_RELEASE_ROOT", "")
-    develop_root = get(ENV, "PIONEER_METRICS_DEVELOP_ROOT", "")
-    current_root = get(ENV, "PIONEER_METRICS_CURRENT_ROOT", "")
-    metrics_root = get(ENV, "PIONEER_METRICS_ROOT", "")
-    output_path = get(ENV, "PIONEER_REPORT_OUTPUT", "")
-    html_output_path = get(ENV, "PIONEER_HTML_REPORT_OUTPUT", "")
-    parse_check = get(ENV, "PIONEER_REPORT_PARSE_CHECK", "false") == "true"
+    run_dir = get(ENV, "RUN_DIR", "")
+    isempty(run_dir) && error("RUN_DIR must be set for metrics report")
+    release_root = normpath(joinpath(run_dir, "..", "metrics", "release"))
+    develop_root = normpath(joinpath(run_dir, "..", "metrics", "develop"))
+    current_root = joinpath(run_dir, "results")
 
-    if parse_check
-        run_parse_check()
-        return
-    end
-
-    if !isempty(metrics_root)
-        isempty(release_root) && (release_root = joinpath(metrics_root, "release"))
-        isempty(develop_root) && (develop_root = joinpath(metrics_root, "develop"))
-        isempty(current_root) && (current_root = joinpath(metrics_root, "results"))
-    end
-
-    plots_root = get(ENV, "PIONEER_FDR_PLOTS_ROOT", current_root)
-
-    isempty(release_root) && error("PIONEER_METRICS_RELEASE_ROOT not set")
-    isempty(develop_root) && error("PIONEER_METRICS_DEVELOP_ROOT not set")
-    isempty(current_root) && error("PIONEER_METRICS_CURRENT_ROOT not set")
-    if isempty(html_output_path) && isempty(output_path)
-        error("PIONEER_HTML_REPORT_OUTPUT not set and PIONEER_REPORT_OUTPUT not set")
-    end
+    plots_root = joinpath(run_dir, "results", "fdr_plots")
+    html_output_path = joinpath(run_dir, "results", "metrics_report.html")
 
     versions = sorted_release_versions(release_root)
     push!(versions, "develop")
@@ -1140,11 +1107,6 @@ function main()
     end
 
     report = build_report(version_data, versions)
-    if isempty(html_output_path)
-        base, _ = splitext(output_path)
-        html_output_path = base * ".html"
-    end
-
     plots_by_search = Dict{String, Dict{String, Vector{String}}}()
     if isdir(plots_root)
         plots_by_search = collect_fdr_plots(plots_root; layout = :results)

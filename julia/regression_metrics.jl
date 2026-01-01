@@ -187,16 +187,16 @@ end
 
 # Resolve the regression results root from env/args.
 function resolve_results_root()
-    env_root = get(ENV, "PIONEER_RESULTS_DIR", "")
+    run_dir = get(ENV, "RUN_DIR", "")
     arg_root = length(ARGS) >= 1 ? ARGS[1] : ""
 
-    if !isempty(env_root)
-        return env_root
-    elseif !isempty(arg_root)
+    if !isempty(arg_root)
         return arg_root
+    elseif !isempty(run_dir)
+        return joinpath(run_dir, "results")
     end
 
-    error("Results directory is not specified; set PIONEER_RESULTS_DIR or pass a path argument")
+    error("Results directory is not specified; set RUN_DIR or pass a path argument")
 end
 
 # Load a JSON config that customizes which metric groups run per dataset/search.
@@ -462,36 +462,18 @@ function compute_metrics_for_params_dir(
 end
 
 function main()
-    params_dir_override = get(ENV, "PIONEER_PARAMS_DIR", "")
-    archive_root = get(ENV, "PIONEER_ARCHIVE_ROOT", "")
+    run_dir = get(ENV, "RUN_DIR", "")
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
+    isempty(run_dir) && error("RUN_DIR must be set for regression metrics")
+    archive_root = run_dir
 
-    if isempty(params_dir_override) && !isempty(archive_root) && !isempty(dataset_name)
-        params_dir_override = joinpath(archive_root, "regression-configs", "params", dataset_name)
-    end
-
-    if !isempty(params_dir_override)
-        if isempty(archive_root)
-            archive_root = normpath(joinpath(params_dir_override, "..", ".."))
-        end
-
-        metrics_config_path = get(ENV, "PIONEER_METRICS_FILE", "")
-        if isempty(metrics_config_path)
-            metrics_config_path = joinpath(params_dir_override, "metrics.json")
-        end
-
-        experimental_design_path = get(ENV, "PIONEER_EXPERIMENTAL_DESIGN", "")
-        if isempty(experimental_design_path)
-            experimental_design_path = params_dir_override
-        end
-
-        three_proteome_designs_path = get(ENV, "PIONEER_THREE_PROTEOME_DESIGNS", "")
-        if isempty(three_proteome_designs_path)
-            three_proteome_designs_path = experimental_design_path
-        end
-
+    if !isempty(dataset_name)
+        params_dir = joinpath(run_dir, "regression-configs", "params", dataset_name)
+        metrics_config_path = joinpath(params_dir, "metrics.json")
+        experimental_design_path = params_dir
+        three_proteome_designs_path = experimental_design_path
         compute_metrics_for_params_dir(
-            params_dir_override;
+            params_dir;
             metrics_config_path = metrics_config_path,
             experimental_design_path = experimental_design_path,
             three_proteome_designs_path = three_proteome_designs_path,
@@ -509,12 +491,8 @@ function main()
 
     @info "Using regression results directory" results_dir=results_dir
 
-    repo_root = normpath(joinpath(@__DIR__, ".."))
-    metrics_config_path = get(
-        ENV,
-        "PIONEER_METRICS_CONFIG",
-        joinpath(repo_root, "metrics_config.json"),
-    )
+    repo_root = joinpath(run_dir, "regression-configs")
+    metrics_config_path = joinpath(repo_root, "metrics_config.json")
     metric_group_config = if isfile(metrics_config_path)
         JSON.parsefile(metrics_config_path; dicttype=Dict)
     else
@@ -522,18 +500,10 @@ function main()
         Dict{String, Any}()
     end
 
-    experimental_design_path = get(
-        ENV,
-        "PIONEER_EXPERIMENTAL_DESIGN",
-        joinpath(repo_root, "experimental_designs"),
-    )
+    experimental_design_path = joinpath(repo_root, "experimental_designs")
     experimental_design = load_experimental_design(experimental_design_path)
 
-    three_proteome_designs_path = get(
-        ENV,
-        "PIONEER_THREE_PROTEOME_DESIGNS",
-        joinpath(repo_root, "experimental_designs"),
-    )
+    three_proteome_designs_path = joinpath(repo_root, "experimental_designs")
     three_proteome_designs = nothing
 
     dataset_dirs = filter(dataset_dirs) do path

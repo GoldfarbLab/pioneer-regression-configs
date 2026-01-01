@@ -13,33 +13,19 @@
 
 set -euo pipefail
 
-if [[ -z "${PIONEER_PARAMS_DIR:-}" ]]; then
-    : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
-    : "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
-    archive_root="${PIONEER_ARCHIVE_ROOT%/}"
-    PIONEER_PARAMS_DIR="${archive_root}/regression-configs/params/${PIONEER_DATASET_NAME}"
-    PIONEER_METRICS_FILE="${PIONEER_METRICS_FILE:-${PIONEER_PARAMS_DIR}/metrics.json}"
-    PIONEER_EXPERIMENTAL_DESIGN="${PIONEER_EXPERIMENTAL_DESIGN:-${PIONEER_PARAMS_DIR}}"
-    PIONEER_ARCHIVE_ROOT="${archive_root}"
-fi
-
-: "${PIONEER_PARAMS_DIR:?PIONEER_PARAMS_DIR not set}"
-: "${PIONEER_METRICS_FILE:?PIONEER_METRICS_FILE not set}"
+: "${RUN_DIR:?RUN_DIR not set}"
+: "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
+RUN_DIR="${RUN_DIR%/}"
 
 export JULIA_NUM_THREADS=${LSB_DJOB_NUMPROC:-2}
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
-export ENTRAPMENT_ANALYSES_PATH="${ENTRAPMENT_ANALYSES_PATH:-${PIONEER_ENTRAPMENT_DIR:-}}"
+export ENTRAPMENT_ANALYSES_PATH="${RUN_DIR}/PioneerEntrapment.jl"
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_dir="${PIONEER_REGRESSION_CONFIGS_DIR:-}"
-if [[ -z "$repo_dir" ]]; then
-    repo_dir="$(cd "${script_dir}/.." && pwd)"
-fi
-metrics_project="${repo_dir}/julia"
+metrics_project="${RUN_DIR}/regression-configs/julia"
 metrics_script="${metrics_project}/regression_metrics.jl"
 if [[ ! -f "$metrics_script" ]]; then
     echo "ERROR: regression metrics script not found at ${metrics_script}" >&2
-    echo "Set PIONEER_REGRESSION_CONFIGS_DIR to the repo root and ensure it is mounted in the container." >&2
+    echo "Ensure the regression-configs repo is available at ${RUN_DIR}/regression-configs inside the container." >&2
     exit 1
 fi
 
