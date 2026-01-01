@@ -327,7 +327,7 @@ function archive_results(
         return
     end
 
-    target_dir = joinpath(archive_root, "results", search_name)
+    target_dir = joinpath(archive_root, "results", basename(results_dir))
     mkpath(target_dir)
 
     if isfile(metrics_path)
