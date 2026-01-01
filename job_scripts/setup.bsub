@@ -11,6 +11,14 @@
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
 
 set -euo pipefail
+
+if [[ -z "${PIONEER_DIR:-}" || -z "${PIONEER_ENTRAPMENT_DIR:-}" ]]; then
+    : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
+    archive_root="${PIONEER_ARCHIVE_ROOT%/}"
+    PIONEER_DIR="${PIONEER_DIR:-${archive_root}/pioneer}"
+    PIONEER_ENTRAPMENT_DIR="${PIONEER_ENTRAPMENT_DIR:-${archive_root}/PioneerEntrapment.jl}"
+fi
+
 : "${PIONEER_DIR:?PIONEER_DIR not set}"
 : "${PIONEER_ENTRAPMENT_DIR:?PIONEER_ENTRAPMENT_DIR not set}"
 

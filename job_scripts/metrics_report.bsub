@@ -12,6 +12,15 @@
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
 
 set -euo pipefail
+
+if [[ -z "${PIONEER_METRICS_RELEASE_ROOT:-}" || -z "${PIONEER_METRICS_DEVELOP_ROOT:-}" || -z "${PIONEER_METRICS_CURRENT_ROOT:-}" ]]; then
+    : "${PIONEER_METRICS_ROOT:?PIONEER_METRICS_ROOT not set}"
+    metrics_root="${PIONEER_METRICS_ROOT%/}"
+    PIONEER_METRICS_RELEASE_ROOT="${PIONEER_METRICS_RELEASE_ROOT:-${metrics_root}/release}"
+    PIONEER_METRICS_DEVELOP_ROOT="${PIONEER_METRICS_DEVELOP_ROOT:-${metrics_root}/develop}"
+    PIONEER_METRICS_CURRENT_ROOT="${PIONEER_METRICS_CURRENT_ROOT:-${metrics_root}/current}"
+fi
+
 : "${PIONEER_METRICS_RELEASE_ROOT:?PIONEER_METRICS_RELEASE_ROOT not set}"
 : "${PIONEER_METRICS_DEVELOP_ROOT:?PIONEER_METRICS_DEVELOP_ROOT not set}"
 : "${PIONEER_METRICS_CURRENT_ROOT:?PIONEER_METRICS_CURRENT_ROOT not set}"

@@ -12,8 +12,18 @@
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 
 set -euo pipefail
-: "${PIONEER_DIR:?PIONEER_DIR not set}"
+
+if [[ -z "${PIONEER_DIR:-}" ]]; then
+    : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
+    PIONEER_DIR="${PIONEER_ARCHIVE_ROOT%/}/pioneer"
+fi
+
 : "${PARAM_FILE:?PARAM_FILE not set}"
+if [[ "${PARAM_FILE}" != /* ]]; then
+    : "${PIONEER_ARCHIVE_ROOT:?PIONEER_ARCHIVE_ROOT not set}"
+    : "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
+    PARAM_FILE="${PIONEER_ARCHIVE_ROOT%/}/adjusted-params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
+fi
 
 export JULIA_NUM_THREADS=16
 JULIA=/usr/local/julia/bin/julia
