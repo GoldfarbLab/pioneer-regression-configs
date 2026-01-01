@@ -16,6 +16,8 @@ set -euo pipefail
 if [[ -z "${PIONEER_METRICS_RELEASE_ROOT:-}" || -z "${PIONEER_METRICS_DEVELOP_ROOT:-}" || -z "${PIONEER_METRICS_CURRENT_ROOT:-}" ]]; then
     : "${PIONEER_METRICS_ROOT:?PIONEER_METRICS_ROOT not set}"
     metrics_root="${PIONEER_METRICS_ROOT%/}"
+    # Point PIONEER_METRICS_ROOT at <run_id> for results/<dataset> layouts, or <run_id>/<results_root>
+    # for flat <dataset> layouts; the derived release/develop/current roots should match the layout in use.
     PIONEER_METRICS_RELEASE_ROOT="${PIONEER_METRICS_RELEASE_ROOT:-${metrics_root}/release}"
     PIONEER_METRICS_DEVELOP_ROOT="${PIONEER_METRICS_DEVELOP_ROOT:-${metrics_root}/develop}"
     PIONEER_METRICS_CURRENT_ROOT="${PIONEER_METRICS_CURRENT_ROOT:-${metrics_root}/current}"

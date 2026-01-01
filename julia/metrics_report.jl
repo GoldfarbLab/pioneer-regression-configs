@@ -64,20 +64,45 @@ end
 function metrics_files(root::AbstractString)
     files = String[]
     if !isdir(root)
-        return files
+        return (; files, scan_root = root, layout = "unknown", mixed_layout = false)
     end
     onerror = err -> begin
         @warn "Skipping missing metrics directory" error = err
         return
     end
-    for (dir, _, filenames) in walkdir(root; onerror = onerror)
-        for filename in filenames
-            if startswith(filename, "metrics_") && endswith(filename, ".json")
-                push!(files, joinpath(dir, filename))
+
+    function collect_files(search_root::AbstractString; skip_results::Bool = false)
+        collected = String[]
+        for (dir, dirs, filenames) in walkdir(search_root; onerror = onerror)
+            if skip_results && dir == search_root
+                filter!(name -> name != "results", dirs)
+            end
+            for filename in filenames
+                if startswith(filename, "metrics_") && endswith(filename, ".json")
+                    push!(collected, joinpath(dir, filename))
+                end
             end
         end
+        collected
     end
-    files
+
+    results_dir = joinpath(root, "results")
+    files_in_root = collect_files(root; skip_results = true)
+    files_in_results = isdir(results_dir) ? collect_files(results_dir) : String[]
+
+    if !isempty(files_in_results) && !isempty(files_in_root)
+        @warn "Found metrics in both results and flat layouts; prioritizing results subtree" root = root results_count = length(files_in_results) flat_count = length(files_in_root)
+        return (; files = files_in_results, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = true)
+    elseif !isempty(files_in_results)
+        return (; files = files_in_results, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = false)
+    elseif !isempty(files_in_root)
+        return (; files = files_in_root, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
+    end
+
+    if isdir(results_dir)
+        return (; files, scan_root = results_dir, layout = "results/<dataset>", mixed_layout = false)
+    end
+    (; files, scan_root = root, layout = "flat <dataset>", mixed_layout = false)
 end
 
 function parse_dataset_search(path::AbstractString, root::AbstractString)
@@ -98,11 +123,22 @@ end
 
 function collect_metrics(root::AbstractString)
     results = Dict{String, Dict{String, Dict{String, Float64}}}()
-    for path in metrics_files(root)
-        dataset, search = parse_dataset_search(path, root)
-        if isempty(search)
-            search = "unknown-search"
-        end
+    summary = metrics_files(root)
+    metrics_count = length(summary.files)
+    layout_counts = Dict{String, Int}()
+    skipped_results_count = 0
+    filename_only_count = 0
+    forced_skip_count = 0
+    duplicate_count = 0
+    searches_seen = String[]
+    for path in summary.files
+        dataset, search, info = parse_dataset_search(path, root; return_info = true)
+        layout_counts[info.layout] = get(layout_counts, info.layout, 0) + 1
+        skipped_results_count += info.skipped_results ? 1 : 0
+        filename_only_count += info.filename_only ? 1 : 0
+        forced_skip_count += info.forced_skip ? 1 : 0
+        push!(searches_seen, search)
+
         metrics_json = nothing
         try
             metrics_json = JSON.parsefile(path; dicttype = Dict)
@@ -112,9 +148,55 @@ function collect_metrics(root::AbstractString)
         end
         flat = flatten_metrics(metrics_json)
         search_entry = get!(results, search, Dict{String, Dict{String, Float64}}())
+        if haskey(search_entry, dataset)
+            duplicate_count += 1
+            @warn "Duplicate dataset/search parsed from metrics file; overwriting prior entry" dataset = dataset search = search path = path
+        end
         search_entry[dataset] = flat
     end
-    results
+    if metrics_count > 0
+        unique_searches = unique(searches_seen)
+        if all(s -> s in ("results", "unknown-search"), unique_searches)
+            @warn "All parsed searches collapsed to results/unknown-search; metrics root may be too high" root = root searches = unique_searches
+        end
+        results_count = count(==("results"), searches_seen)
+        if results_count > 0 && results_count / metrics_count >= 0.8
+            @warn "Most searches parsed as results; metrics root may be one level too high" root = root results_search_count = results_count total = metrics_count
+        end
+    end
+
+    layout_summary = if !isempty(layout_counts)
+        maximum(collect(keys(layout_counts)); by = key -> layout_counts[key])
+    else
+        summary.layout
+    end
+    warning_needed = skipped_results_count > 0 || filename_only_count > 0 || forced_skip_count > 0
+    return (;
+        results,
+        metrics_count,
+        layout = layout_summary,
+        scan_root = summary.scan_root,
+        mixed_layout = summary.mixed_layout,
+        skipped_results_count,
+        filename_only_count,
+        forced_skip_count,
+        duplicate_count,
+        warning_needed,
+    )
+end
+
+function run_parse_check()
+    sample_root = "/tmp/pioneer-metrics-root"
+    samples = [
+        joinpath(sample_root, "results", "Example_Dataset", "metrics_Example_Dataset_search_alpha.json"),
+        joinpath(sample_root, "Example_Dataset", "metrics_Example_Dataset_search_alpha.json"),
+        joinpath(sample_root, "results", "MTAC_Yeast_Alternating_5min", "metrics_MTAC_Yeast_Alternating_5min_search_entrap.json"),
+    ]
+    println("Parsing sample metrics paths:")
+    for path in samples
+        dataset, search = parse_dataset_search(path, sample_root)
+        println("  ", path, " -> dataset=", dataset, ", search=", search)
+    end
 end
 
 function slugify_label(label::AbstractString)
@@ -274,6 +356,7 @@ function build_html_report(
     println(buffer, ".table-controls label { font-size: 12px; color: #444; }")
     println(buffer, ".table-filter { padding: 4px 6px; font-size: 12px; min-width: 220px; }")
     println(buffer, ".table-chart { height: 520px; margin: 6px 0 12px; }")
+    println(buffer, ".warning-banner { background: #fff4e5; border: 1px solid #f1b165; padding: 8px 12px; border-radius: 6px; color: #7a4b00; margin-bottom: 12px; }")
     println(buffer, "</style>")
     println(buffer, "<script src=\"https://cdn.plot.ly/plotly-2.27.0.min.js\"></script>")
     println(buffer, "</head>")
@@ -640,6 +723,7 @@ function build_metrics_report_page(metrics_report::AbstractString)
     println(buffer, ".table-controls label { font-size: 12px; color: #444; }")
     println(buffer, ".table-filter { padding: 4px 6px; font-size: 12px; min-width: 220px; }")
     println(buffer, ".table-chart { height: 520px; margin: 6px 0 12px; }")
+    println(buffer, ".warning-banner { background: #fff4e5; border: 1px solid #f1b165; padding: 8px 12px; border-radius: 6px; color: #7a4b00; margin-bottom: 12px; }")
     println(buffer, "</style>")
     println(buffer, "<script src=\"https://cdn.plot.ly/plotly-2.27.0.min.js\"></script>")
     println(buffer, "</head>")
@@ -1472,15 +1556,38 @@ function write_keap1_tables(
     end
 end
 
-function build_report(version_data::AbstractDict{String, Any}, versions::Vector{String})
+function layout_summary_line(layout_by_version::Dict{String, String}, versions::Vector{String})
+    entries = String[]
+    for version in versions
+        layout = get(layout_by_version, version, "unknown")
+        push!(entries, string(version, ": ", layout))
+    end
+    join(entries, " · ")
+end
+
+function build_report(
+    version_data::AbstractDict{String, Any},
+    versions::Vector{String},
+    layout_by_version::Dict{String, String},
+    warning_banner::AbstractString,
+)
     buffer = IOBuffer()
     table_counter = Ref(0)
     println(buffer, "<div class=\"metric-block\">")
     println(buffer, "<h2>Regression Metrics Report</h2>")
+    if !isempty(warning_banner)
+        println(buffer, "<div class=\"warning-banner\">", html_escape(warning_banner), "</div>")
+    end
     println(
         buffer,
         "<p><strong>Versions:</strong> ",
         html_escape(join(versions, ", ")),
+        "</p>",
+    )
+    println(
+        buffer,
+        "<p><strong>Detected metrics layout:</strong> ",
+        html_escape(layout_summary_line(layout_by_version, versions)),
         "</p>",
     )
     println(buffer, "</div>")
@@ -1683,6 +1790,12 @@ function main()
     metrics_root = get(ENV, "PIONEER_METRICS_ROOT", "")
     output_path = get(ENV, "PIONEER_REPORT_OUTPUT", "")
     html_output_path = get(ENV, "PIONEER_HTML_REPORT_OUTPUT", "")
+    parse_check = truthy_env(get(ENV, "PIONEER_REPORT_PARSE_CHECK", "false"))
+
+    if parse_check
+        run_parse_check()
+        return
+    end
 
     if !isempty(metrics_root)
         isempty(release_root) && (release_root = joinpath(metrics_root, "release"))
@@ -1702,18 +1815,33 @@ function main()
     push!(versions, "current")
 
     version_data = Dict{String, Any}()
+    layout_by_version = Dict{String, String}()
+    warning_needed = false
     for version in versions
         if version == "develop"
-            version_data[version] = collect_metrics(develop_root)
+            summary = collect_metrics(develop_root)
+            version_data[version] = summary.results
+            layout_by_version[version] = summary.layout
+            warning_needed |= summary.warning_needed
+            @info "Collected metrics" version = version root = develop_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
         elseif version == "current"
-            version_data[version] = collect_metrics(current_root)
+            summary = collect_metrics(current_root)
+            version_data[version] = summary.results
+            layout_by_version[version] = summary.layout
+            warning_needed |= summary.warning_needed
+            @info "Collected metrics" version = version root = current_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
         else
             version_root = joinpath(release_root, version)
-            version_data[version] = collect_metrics(version_root)
+            summary = collect_metrics(version_root)
+            version_data[version] = summary.results
+            layout_by_version[version] = summary.layout
+            warning_needed |= summary.warning_needed
+            @info "Collected metrics" version = version root = version_root count = summary.metrics_count layout = summary.layout scan_root = summary.scan_root mixed_layout = summary.mixed_layout
         end
     end
 
-    report = build_report(version_data, versions)
+    banner = warning_needed ? "Parsed metrics paths required layout adjustments; verify the metrics root and filename conventions." : ""
+    report = build_report(version_data, versions, layout_by_version, banner)
     report_page = build_metrics_report_page(report)
 
     if isempty(html_output_path)
@@ -1736,4 +1864,6 @@ function main()
     end
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end

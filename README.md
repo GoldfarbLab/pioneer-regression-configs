@@ -27,6 +27,22 @@ julia julia/regression_metrics.jl
 The script uses optional JSON configuration for metric grouping. If a metrics
 config is not provided or cannot be parsed, default metric groups are used.
 
+## Regression metrics report layouts
+
+The metrics report (`julia/metrics_report.jl`) supports two directory layouts:
+
+- `<root>/results/<dataset>/metrics_<dataset>_<search>.json`
+- `<root>/<dataset>/metrics_<dataset>_<search>.json`
+
+Search names are always derived from the filename suffix after the last
+underscore so dataset names can include underscores (for example,
+`metrics_MTAC_Yeast_Alternating_5min_search_entrap.json` parses as dataset
+`MTAC_Yeast_Alternating_5min` and search `search_entrap`). Set
+`PIONEER_METRICS_RELEASE_ROOT`, `PIONEER_METRICS_DEVELOP_ROOT`, and
+`PIONEER_METRICS_CURRENT_ROOT` to the appropriate root for each version (these
+can differ between release/develop/current depending on how results were
+archived).
+
 ## Batch scripts
 
 The scripts in `job_scripts/` are intended for LSF execution. They use
