@@ -270,6 +270,7 @@ function dataset_name_from_results(results_dir::AbstractString)
     base
 end
 
+# Metrics files follow metrics_<dataset>_<search>.json; reports derive search from filename suffix.
 function output_metrics_path(results_dir::AbstractString, dataset_name::AbstractString, search_name::AbstractString)
     filename = string("metrics_", dataset_name, "_", search_name, ".json")
     joinpath(results_dir, filename)
