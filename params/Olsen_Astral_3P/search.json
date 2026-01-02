@@ -1,7 +1,7 @@
 {
   "paths": {
-    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/Olsen_Astral_3P",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_3P_len7o40_ch2o3_mc1_OlsenAstral_Sep17-2025.poin",
+    "ms_data": "/scratch1/fs1/d.goldfarb/pioneer-regression/data/Olsen_Astral_3P",
+    "library": "/scratch1/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_3P_len7o40_ch2o3_mc1_OlsenAstral_Sep17-2025.poin",
     "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/Olsen_Astral_3P"
   },
   "output": {

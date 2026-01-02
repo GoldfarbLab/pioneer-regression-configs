@@ -1,7 +1,7 @@
 {
   "paths": {
-    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/KEAP1KO_Eclipse",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_human_len7o40_ch2o3_mc1_Major_Nov20-2025_Entrap.poin",
+    "ms_data": "/scratch1/fs1/d.goldfarb/pioneer-regression/data/KEAP1KO_Eclipse",
+    "library": "/scratch1/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_human_len7o40_ch2o3_mc1_Major_Nov20-2025_Entrap.poin",
     "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/KEAP1KO_Eclipse_Entrapment"
   },
   "output": {
