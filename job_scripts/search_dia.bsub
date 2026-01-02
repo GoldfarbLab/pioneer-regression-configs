@@ -18,22 +18,15 @@ set -euo pipefail
 : "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
 RUN_DIR="${RUN_DIR%/}"
 PIONEER_DIR="${RUN_DIR}/pioneer"
-if [[ "${PARAM_FILE}" != /* ]]; then
-    PARAM_FILE="${RUN_DIR}/regression-configs/params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
-fi
+PARAM_FILE="${RUN_DIR}/regression-configs/params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 
 export JULIA_NUM_THREADS=16
 export PIONEER_DIR
 JULIA=/usr/local/julia/bin/julia
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
-mkdir -p "$JULIA_DEPOT_PATH"
 
 "$JULIA" --project="$PIONEER_DIR" -e '
-    using Pkg
-    # Ensure all dependencies (including Pioneer in dev mode, if applicable) are present
-    Pkg.instantiate()
-
     using Pioneer
     SearchDIA(ENV["PARAM_FILE"])
 '
