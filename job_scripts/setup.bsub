@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(julia:1.11.7)'
+#BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
 #BSUB -J pioneer-setup
 #BSUB -q general
 #BSUB -R "select[hname!='compute1-exec-71.ris.wustl.edu' && hname!='compute1-exec-73.ris.wustl.edu' && hname!='compute1-exec-79.ris.wustl.edu' && hname!='compute1-exec-41.ris.wustl.edu' && hname!='compute1-exec-72.ris.wustl.edu'] rusage[mem=16GB] span[hosts=1]"
