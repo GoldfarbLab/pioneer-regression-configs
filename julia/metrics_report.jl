@@ -24,14 +24,46 @@ function parse_version_label(label::AbstractString)
 end
 
 function sorted_release_versions(root::AbstractString)
-    if !isdir(root)
-        return String[]
+    labels = String[]
+    if isdir(root)
+        versions = filter(readdir(root; join=true)) do path
+            isdir(path)
+        end
+        labels = map(basename, versions)
     end
-    versions = filter(readdir(root; join=true)) do path
-        isdir(path)
+
+    parsed_labels = Dict{String, Vector{Int}}()
+    for label in labels
+        parsed = parse_version_label(label)
+        parsed === nothing && continue
+        parsed_labels[label] = parsed
     end
-    labels = map(basename, versions)
-    sort(labels; lt = (a, b) -> begin
+
+    sorted_parsed_labels = sort(collect(keys(parsed_labels)); lt = (a, b) -> parsed_labels[a] < parsed_labels[b])
+    latest_patch = isempty(sorted_parsed_labels) ? String[] : sorted_parsed_labels[max(1, length(sorted_parsed_labels) - 2):end]
+
+    minor_best = Dict{Tuple{Int, Int}, Tuple{Vector{Int}, String}}()
+    for (label, parsed) in parsed_labels
+        key = (parsed[1], parsed[2])
+        current = get(minor_best, key, (Int[], ""))
+        if isempty(current[1]) || parsed[3] > current[1][3]
+            minor_best[key] = (parsed, label)
+        end
+    end
+    minor_labels = [entry[2] for entry in values(minor_best)]
+    sorted_minor_labels = sort(minor_labels; lt = (a, b) -> parsed_labels[a] < parsed_labels[b])
+    latest_minor = isempty(sorted_minor_labels) ? String[] : sorted_minor_labels[max(1, length(sorted_minor_labels) - 2):end]
+
+    selected = Set{String}()
+    for label in latest_patch
+        push!(selected, label)
+    end
+    for label in latest_minor
+        push!(selected, label)
+    end
+    push!(selected, "v0.6.4")
+
+    sort(collect(selected); lt = (a, b) -> begin
         parsed_a = parse_version_label(a)
         parsed_b = parse_version_label(b)
         if parsed_a === nothing || parsed_b === nothing
@@ -1106,8 +1138,8 @@ function main()
     html_output_path = joinpath(run_dir, "results", "metrics_report.html")
 
     versions = sorted_release_versions(release_root)
-    push!(versions, "develop")
     push!(versions, "current")
+    push!(versions, "develop")
 
     version_data = Dict{String, Any}()
     for version in versions
