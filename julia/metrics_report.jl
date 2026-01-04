@@ -1138,8 +1138,8 @@ function main()
     html_output_path = joinpath(run_dir, "results", "metrics_report.html")
 
     versions = sorted_release_versions(release_root)
-    push!(versions, "current")
     push!(versions, "develop")
+    push!(versions, "current")
 
     version_data = Dict{String, Any}()
     for version in versions
