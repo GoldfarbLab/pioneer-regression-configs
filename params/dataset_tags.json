@@ -34,7 +34,7 @@
       "tags": ["fast"]
     },
     "SCIEX_3P": {
-      "tags": ["fast"]
+      "tags": []
     },
     "SCP_Astral_1000pg_12ms": {
       "tags": ["fastest", "fast"]
