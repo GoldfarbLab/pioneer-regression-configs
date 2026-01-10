@@ -4,10 +4,7 @@
 #BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
 #BSUB -J regression-search
 #BSUB -q general
-#BSUB -R "rusage[mem=64GB] span[hosts=1]"
-#BSUB -n 8
 #BSUB -W 3000
-#BSUB -M 64GB
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 
@@ -20,7 +17,6 @@ RUN_DIR="${RUN_DIR%/}"
 PIONEER_DIR="${RUN_DIR}/pioneer"
 PARAM_FILE="${RUN_DIR}/regression-configs/params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 
-export JULIA_NUM_THREADS=8
 export PIONEER_DIR
 JULIA=/usr/local/julia/bin/julia
 
