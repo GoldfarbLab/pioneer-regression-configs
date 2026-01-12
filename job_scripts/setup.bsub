@@ -81,6 +81,8 @@ else
     echo "WARNING: config root not found at ${config_root}" >&2
 fi
 
+"$JULIA" -e 'println("Sys.CPU_THREADS = ", Sys.CPU_THREADS)'
+
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
     Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
