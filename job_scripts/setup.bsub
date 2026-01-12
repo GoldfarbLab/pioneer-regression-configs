@@ -4,8 +4,9 @@
 #BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
 #BSUB -J pioneer-setup
 #BSUB -q general
-#BSUB -R "select[hname!='compute1-exec-71.ris.wustl.edu' && hname!='compute1-exec-73.ris.wustl.edu' && hname!='compute1-exec-79.ris.wustl.edu' && hname!='compute1-exec-41.ris.wustl.edu' && hname!='compute1-exec-72.ris.wustl.edu'] rusage[mem=16GB] span[hosts=1]"
+#BSUB -R "select[hname!='compute1-exec-71.ris.wustl.edu' && hname!='compute1-exec-73.ris.wustl.edu' && hname!='compute1-exec-79.ris.wustl.edu' && hname!='compute1-exec-41.ris.wustl.edu' && hname!='compute1-exec-72.ris.wustl.edu'] rusage[mem=8GB] span[hosts=1]"
 #BSUB -n 8
+#BSUB -M 8GB
 #BSUB -W 120
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
