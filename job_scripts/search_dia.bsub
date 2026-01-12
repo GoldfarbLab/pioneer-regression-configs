@@ -3,7 +3,7 @@
 #BSUB -G compute-d.goldfarb
 #BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
 #BSUB -J regression-search
-#BSUB -q general
+#BSUB -q general-interactive
 #BSUB -W 3000
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 #BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt

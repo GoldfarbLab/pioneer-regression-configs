@@ -5,7 +5,7 @@
 #BSUB -J pioneer-setup
 #BSUB -q general
 #BSUB -R "rusage[mem=8GB] span[hosts=1]"
-#BSUB -n 8
+#BSUB -n 4
 #BSUB -M 8GB
 #BSUB -W 120
 #BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
