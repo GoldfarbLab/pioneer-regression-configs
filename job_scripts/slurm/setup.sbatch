@@ -48,10 +48,10 @@ copy_from_storage() {
 
     if [[ -d "$storage_path" ]]; then
         mkdir -p "$scratch_path"
-        cp -a "$storage_path"/. "$scratch_path"/
+        cp -a --no-preserve=mode,ownership "$storage_path"/. "$scratch_path"/
     elif [[ -f "$storage_path" ]]; then
         mkdir -p "$(dirname "$scratch_path")"
-        cp -a "$storage_path" "$scratch_path"
+        cp -a --no-preserve=mode,ownership "$storage_path" "$scratch_path"
     else
         echo "WARNING: storage source missing for $scratch_path ($storage_path)" >&2
     fi
