@@ -8,7 +8,8 @@ computes regression metrics and reports.
 
 - `params/`: per-dataset search parameter JSON files used for regression runs.
 - `params-exclude/`: parameter files that are excluded from default runs.
-- `job_scripts/`: LSF batch scripts for setup, search, metrics, and cleanup.
+- `job_scripts/`: LSF batch scripts for setup, search, metrics, and cleanup, plus
+  SLURM equivalents in `job_scripts/slurm/`.
 - `julia/`: Julia package and scripts for regression metrics and reports.
 
 ## Running regression metrics
@@ -20,7 +21,7 @@ results root directory containing search outputs. Provide the location via the
 Example:
 
 ```bash
-export PIONEER_RESULTS_DIR=/scratch1/fs1/d.goldfarb/pioneer-regression/search
+export PIONEER_RESULTS_DIR=/scratch2/fs1/d.goldfarb/pioneer-regression/search
 julia julia/regression_metrics.jl
 ```
 
@@ -45,10 +46,11 @@ archived).
 
 ## Batch scripts
 
-The scripts in `job_scripts/` are intended for LSF execution. They use
-`PIONEER_REGRESSION_CONFIGS_DIR` to locate this repository when running inside
-containers and expect Pioneer results under the standard regression paths in
-`/scratch1/fs1/d.goldfarb/pioneer-regression/`.
+The scripts in `job_scripts/` are intended for LSF execution, while
+`job_scripts/slurm/` contains SLURM equivalents that wrap Julia/Python entrypoints
+with `srun --container-image`. They use `PIONEER_REGRESSION_CONFIGS_DIR` to locate
+this repository when running inside containers and expect Pioneer results under
+the standard regression paths in `/scratch2/fs1/d.goldfarb/pioneer-regression/`.
 
 ## Dataset tags
 

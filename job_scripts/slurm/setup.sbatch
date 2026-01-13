@@ -1,15 +1,14 @@
 #!/bin/bash
-#BSUB -g /d.goldfarb/compute
-#BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J pioneer-setup
-#BSUB -q general
-#BSUB -R "rusage[mem=8GB] span[hosts=1]"
-#BSUB -n 4
-#BSUB -M 8GB
-#BSUB -W 120
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
+#SBATCH --account=compute2-d.goldfarb
+#SBATCH --job-name=pioneer-setup
+#SBATCH --partition=general-cpu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8G
+#SBATCH --time=2:00:00
+#SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%j.out
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%j.out
 
 set -euo pipefail
 
@@ -20,8 +19,8 @@ PIONEER_ENTRAPMENT_DIR="${RUN_DIR}/PioneerEntrapment.jl"
 export PIONEER_DIR PIONEER_ENTRAPMENT_DIR
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
-export JULIA_NUM_PRECOMPILE_TASKS="${LSB_DJOB_NUMPROC}"
-export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
+export JULIA_NUM_PRECOMPILE_TASKS="${SLURM_CPUS_PER_TASK:-1}"
+export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 
 mkdir -p "$JULIA_DEPOT_PATH"
 

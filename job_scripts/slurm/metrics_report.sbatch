@@ -1,24 +1,22 @@
 #!/bin/bash
-#BSUB -g /d.goldfarb/compute
-#BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J regression-metrics-report
-#BSUB -q general
-#BSUB -R "rusage[mem=8GB] span[hosts=1]"
-#BSUB -n 1
-#BSUB -W 600
-#BSUB -M 8GB
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%J.out.txt
+#SBATCH --account=compute2-d.goldfarb
+#SBATCH --job-name=regression-metrics-report
+#SBATCH --partition=general-cpu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=8G
+#SBATCH --time=10:00:00
+#SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%j.out.txt
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%j.out.txt
 
 set -euo pipefail
 
 : "${RUN_DIR:?RUN_DIR not set}"
 
-export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
+export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="${RUN_DIR%/}/regression-configs"
 report_project="${repo_dir}/julia"
 report_script="${report_project}/metrics_report.jl"

@@ -1,15 +1,14 @@
 #!/bin/bash
-#BSUB -g /d.goldfarb/compute
-#BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J pioneer-cleanup
-#BSUB -q general
-#BSUB -R "rusage[mem=4GB] span[hosts=1]"
-#BSUB -n 2
-#BSUB -W 60
-#BSUB -M 4GB
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.out
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%J.out
+#SBATCH --account=compute2-d.goldfarb
+#SBATCH --job-name=pioneer-cleanup
+#SBATCH --partition=general-cpu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=4G
+#SBATCH --time=1:00:00
+#SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%j.out
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%j.out
 
 set -euo pipefail
 : "${RUN_DIR:?RUN_DIR not set}"

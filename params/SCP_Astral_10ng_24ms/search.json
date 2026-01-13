@@ -1,8 +1,8 @@
 {
     "paths": {
-    "ms_data": "/scratch1/fs1/d.goldfarb/pioneer-regression/data/SCP_Astral_10ng_24ms",
-    "library": "/scratch1/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_human_len7o40_ch2o3_mc1_SCP_Sep17-2025.poin",
-    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/SCP_Astral_10ng_24ms"
+    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/SCP_Astral_10ng_24ms",
+    "library": "/scratch2/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_human_len7o40_ch2o3_mc1_SCP_Sep17-2025.poin",
+    "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/SCP_Astral_10ng_24ms"
     },
     "output": {
         "write_csv": false,

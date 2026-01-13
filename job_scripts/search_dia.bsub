@@ -5,8 +5,8 @@
 #BSUB -J regression-search
 #BSUB -q general
 #BSUB -W 3000
-#BSUB -o /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
-#BSUB -e /scratch1/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
+#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
+#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
 
 set -euo pipefail
 
