@@ -7,6 +7,7 @@
 #SBATCH --mem=8G
 #SBATCH --time=10:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
+#SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active
 #SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%j.out.txt
 #SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-metrics-report.%j.out.txt
 
