@@ -61,11 +61,11 @@ Schema:
 ```json
 {
   "datasets": {
-    "<dataset_dir>": { "tags": ["fast"], "priority": 100 }
+    "<dataset_dir>": { "tags": ["fast"], "order": 100 }
   }
 }
 ```
 
 To mark a dataset as fast, add the string `"fast"` to its `tags` array.
-Use `"priority"` to specify an explicit submission ordering value (higher runs
+Use `"order"` to specify an explicit submission ordering value (higher runs
 earlier); omit the field or set it to `0` to use the default ordering.
