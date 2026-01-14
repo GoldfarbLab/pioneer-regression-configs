@@ -178,6 +178,8 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
             output_dir = output_dir,
             score_qval_pairs = precursor_pairs,
             plot_formats = [:png],
+            paired_stride = 10,
+            use_fast_paired = false,
         )
     catch err
         @warn "Precursor entrapment analysis run failed" error=err
