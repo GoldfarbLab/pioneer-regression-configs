@@ -1,15 +1,15 @@
 #!/bin/bash
-#BSUB -g /d.goldfarb/compute
-#BSUB -G compute-d.goldfarb
-#BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J setup
-#BSUB -q general
-#BSUB -R "rusage[mem=8GB] span[hosts=1]"
-#BSUB -n 4
-#BSUB -M 8GB
-#BSUB -W 120
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%J.out
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%J.out
+#SBATCH --account=compute2-d.goldfarb
+#SBATCH --job-name=setup
+#SBATCH --partition=general-cpu
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8G
+#SBATCH --time=24:00:00
+#SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
+#SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%j.out
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%j.out
 
 set -euo pipefail
 
@@ -20,8 +20,8 @@ PIONEER_ENTRAPMENT_DIR="${RUN_DIR}/PioneerEntrapment.jl"
 export PIONEER_DIR PIONEER_ENTRAPMENT_DIR
 
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
-export JULIA_NUM_PRECOMPILE_TASKS="${LSB_DJOB_NUMPROC}"
-export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
+export JULIA_NUM_PRECOMPILE_TASKS="${SLURM_CPUS_PER_TASK:-1}"
+export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 
 mkdir -p "$JULIA_DEPOT_PATH"
 
@@ -48,10 +48,10 @@ copy_from_storage() {
 
     if [[ -d "$storage_path" ]]; then
         mkdir -p "$scratch_path"
-        cp -a "$storage_path"/. "$scratch_path"/
+        cp -a --no-preserve=mode,ownership "$storage_path"/. "$scratch_path"/
     elif [[ -f "$storage_path" ]]; then
         mkdir -p "$(dirname "$scratch_path")"
-        cp -a "$storage_path" "$scratch_path"
+        cp -a --no-preserve=mode,ownership "$storage_path" "$scratch_path"
     else
         echo "WARNING: storage source missing for $scratch_path ($storage_path)" >&2
     fi

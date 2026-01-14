@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "/scratch1/fs1/d.goldfarb/pioneer-regression/data/MTAC_Yeast_Standard_3min",
-    "library": "/scratch1/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
-    "results": "/scratch1/fs1/d.goldfarb/pioneer-regression/search/MTAC_Yeast_Standard_3min"
+    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/MTAC_Yeast_Standard_3min",
+    "library": "/scratch2/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_yeast_len7o40_ch2o3_mc1_MTACAstral_Sep17-2025.poin",
+    "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/MTAC_Yeast_Standard_3min"
   },
   "output": {
     "write_csv": false,
