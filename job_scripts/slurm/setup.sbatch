@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=compute2-d.goldfarb
-#SBATCH --job-name=pioneer-setup
+#SBATCH --job-name=setup
 #SBATCH --partition=general-cpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
@@ -8,8 +8,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
 #SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
-#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%j.out
-#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%j.out
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%j.out
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%j.out
 
 set -euo pipefail
 

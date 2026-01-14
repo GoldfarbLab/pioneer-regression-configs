@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=compute2-d.goldfarb
-#SBATCH --job-name=pioneer-cleanup
+#SBATCH --job-name=cleanup
 #SBATCH --partition=general-cpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=2
@@ -8,8 +8,8 @@
 #SBATCH --time=1:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
 #SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
-#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%j.out
-#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-cleanup.%j.out
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
 
 set -euo pipefail
 : "${RUN_DIR:?RUN_DIR not set}"
