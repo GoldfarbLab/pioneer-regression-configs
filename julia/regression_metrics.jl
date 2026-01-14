@@ -287,7 +287,10 @@ function cleanup_entrapment_dir(entrapment_dir::AbstractString)
     for entry in readdir(entrapment_dir; join = true)
         if isfile(entry)
             endswith(entry, ".png") && continue
+            is_log_file(entry) && continue
             rm(entry; force = true, recursive = true)
+        elseif isdir(entry) && basename(entry) == "qc_plots"
+            continue
         else
             rm(entry; force = true, recursive = true)
         end
@@ -314,6 +317,8 @@ function cleanup_results_dir(results_dir::AbstractString, metrics_path::Abstract
             end
         elseif isdir(entry) && basename(entry) == "entrapment_analysis"
             cleanup_entrapment_dir(entry)
+            continue
+        elseif isdir(entry) && basename(entry) == "qc_plots"
             continue
         end
 
@@ -349,6 +354,11 @@ function archive_results(
                 mv(entry, joinpath(target_dir, basename(entry)); force = true)
             end
         end
+    end
+
+    qc_plots_dir = joinpath(results_dir, "qc_plots")
+    if isdir(qc_plots_dir)
+        mv(qc_plots_dir, joinpath(target_dir, "qc_plots"); force = true)
     end
 
     for entry in readdir(results_dir; join = true)
