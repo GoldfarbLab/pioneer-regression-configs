@@ -2,14 +2,14 @@
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
 #BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J pioneer-setup
+#BSUB -J setup
 #BSUB -q general
 #BSUB -R "rusage[mem=8GB] span[hosts=1]"
 #BSUB -n 4
 #BSUB -M 8GB
 #BSUB -W 120
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/pioneer-setup.%J.out
+#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%J.out
+#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/setup.%J.out
 
 set -euo pipefail
 

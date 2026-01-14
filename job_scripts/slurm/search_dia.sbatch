@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=compute2-d.goldfarb
-#SBATCH --job-name=regression-search
+#SBATCH --job-name=search
 #SBATCH --partition=general-cpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
@@ -8,8 +8,8 @@
 #SBATCH --time=50:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
 #SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
-#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%j.out.txt
-#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%j.out.txt
+#SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/search.%j.out.txt
+#SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/search.%j.out.txt
 
 set -euo pipefail
 

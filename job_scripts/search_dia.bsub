@@ -2,11 +2,11 @@
 #BSUB -g /d.goldfarb/compute
 #BSUB -G compute-d.goldfarb
 #BSUB -a 'docker(dennisgoldfarb/julia-python:1.11.7)'
-#BSUB -J regression-search
+#BSUB -J search
 #BSUB -q general
 #BSUB -W 3000
-#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
-#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/regression-search.%J.out.txt
+#BSUB -o /scratch2/fs1/d.goldfarb/pioneer-regression/logs/search.%J.out.txt
+#BSUB -e /scratch2/fs1/d.goldfarb/pioneer-regression/logs/search.%J.out.txt
 
 set -euo pipefail
 
