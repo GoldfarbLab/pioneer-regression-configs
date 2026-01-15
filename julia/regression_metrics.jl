@@ -295,7 +295,7 @@ end
 
 function is_log_file(path::AbstractString)
     lowercasepath = lowercase(path)
-    endswith(lowercasepath, ".log") || endswith(lowercasepath, ".log.gz")
+    endswith(lowercasepath, ".log")
 end
 
 function cleanup_entrapment_dir(entrapment_dir::AbstractString)
@@ -360,9 +360,10 @@ function archive_results(
     mkpath(target_dir)
 
     if preserve_results
-        for entry in readdir(results_dir; join = true)
-            cp(entry, joinpath(target_dir, basename(entry)); force = true, recursive = true)
+        if isdir(target_dir)
+            rm(target_dir; force = true, recursive = true)
         end
+        mv(results_dir, target_dir; force = true)
         @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=target_dir
         return
     end
