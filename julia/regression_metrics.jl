@@ -276,7 +276,9 @@ end
 function dataset_name_from_results_dir(results_dir::AbstractString)
     normalized = normpath(results_dir)
     parts = filter(!isempty, split(normalized, '/'))
-    if !isempty(parts)
+    if length(parts) >= 3
+        return parts[end - 2]
+    elseif !isempty(parts)
         return parts[end]
     end
     basename(normalized)
@@ -506,7 +508,7 @@ function main()
     archive_root = run_dir
 
     if !isempty(dataset_name)
-        params_dir = joinpath(run_dir, "regression-configs", "params", dataset_name)
+        params_dir = joinpath(run_dir, "adjusted-params", dataset_name)
         metrics_config_path = joinpath(params_dir, "metrics.json")
         experimental_design_path = params_dir
         three_proteome_designs_path = experimental_design_path
