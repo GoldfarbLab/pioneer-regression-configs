@@ -509,8 +509,9 @@ function main()
 
     if !isempty(dataset_name)
         params_dir = joinpath(run_dir, "adjusted-params", dataset_name)
-        metrics_config_path = joinpath(params_dir, "metrics.json")
-        experimental_design_path = params_dir
+        config_dir = joinpath(run_dir, "regression-configs", "params", dataset_name)
+        metrics_config_path = joinpath(config_dir, "metrics.json")
+        experimental_design_path = config_dir
         three_proteome_designs_path = experimental_design_path
         compute_metrics_for_params_dir(
             params_dir;
