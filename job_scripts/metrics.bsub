@@ -20,7 +20,7 @@ RUN_DIR="${RUN_DIR%/}"
 export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
 export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
 export ENTRAPMENT_ANALYSES_PATH="${RUN_DIR}/PioneerEntrapment.jl"
-export PIONEER_PRESERVE_RESULTS="${PIONEER_PRESERVE_RESULTS:-false}"
+export PIONEER_DELETE_RESULTS="${PIONEER_DELETE_RESULTS:-true}"
 
 metrics_project="${RUN_DIR}/regression-configs/julia"
 metrics_script="${metrics_project}/regression_metrics.jl"

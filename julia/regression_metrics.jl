@@ -504,7 +504,8 @@ end
 function main()
     run_dir = get(ENV, "RUN_DIR", "")
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
-    preserve_results = parse_bool_env("PIONEER_PRESERVE_RESULTS")
+    delete_results = parse_bool_env("PIONEER_DELETE_RESULTS")
+    preserve_results = !delete_results
     isempty(run_dir) && error("RUN_DIR must be set for regression metrics")
     archive_root = run_dir
 
