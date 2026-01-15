@@ -276,8 +276,8 @@ end
 function dataset_name_from_results_dir(results_dir::AbstractString)
     normalized = normpath(results_dir)
     parts = filter(!isempty, split(normalized, '/'))
-    if length(parts) >= 3
-        return parts[end - 2]
+    if !isempty(parts)
+        return parts[end]
     end
     basename(normalized)
 end
