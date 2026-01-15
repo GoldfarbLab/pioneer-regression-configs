@@ -25,7 +25,7 @@ export PIONEER_RESULTS_DIR=/scratch2/fs1/d.goldfarb/pioneer-regression/search
 julia julia/regression_metrics.jl
 ```
 
-Set `PIONEER_PRESERVE_RESULTS=true` to skip cleanup and copy full search results into
+Set `PIONEER_DELETE_RESULTS=false` to skip cleanup and copy full search results into
 the storage-backed `results/` directory (the original search outputs remain in place).
 By default, only logs, metrics, and QC artifacts are retained.
 
