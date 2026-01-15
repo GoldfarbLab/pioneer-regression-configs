@@ -274,11 +274,12 @@ function results_dir_from_param(path::AbstractString)
 end
 
 function dataset_name_from_results_dir(results_dir::AbstractString)
-    parts = splitpath(results_dir)
+    normalized = normpath(results_dir)
+    parts = filter(!isempty, split(normalized, '/'))
     if length(parts) >= 3
         return parts[end - 2]
     end
-    basename(results_dir)
+    basename(normalized)
 end
 
 # Metrics files follow metrics_<dataset>_<search>.json; reports derive search from filename suffix.
