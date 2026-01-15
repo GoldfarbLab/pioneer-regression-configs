@@ -273,18 +273,12 @@ function results_dir_from_param(path::AbstractString)
     nothing
 end
 
-function dataset_name_from_results(results_dir::AbstractString)
-    base = basename(results_dir)
-    if isempty(base) || base == "." || base == ".."
-        parent_dir = dirname(results_dir)
-        if isempty(parent_dir) || parent_dir == results_dir
-            return base
-        end
-
-        return basename(parent_dir)
+function dataset_name_from_results_dir(results_dir::AbstractString)
+    parts = splitpath(results_dir)
+    if length(parts) >= 3
+        return parts[end - 2]
     end
-
-    base
+    basename(results_dir)
 end
 
 # Metrics files follow metrics_<dataset>_<search>.json; reports derive search from filename suffix.
@@ -356,7 +350,7 @@ function archive_results(
         return
     end
 
-    target_dir = joinpath(archive_root, "results", basename(results_dir))
+    target_dir = joinpath(archive_root, "results", dataset_name)
     mkpath(target_dir)
 
     if preserve_results
@@ -425,8 +419,8 @@ function compute_metrics_for_params_dir(
         results_dir = results_dir_from_param(param_file)
         results_dir === nothing && error("Missing results entry in search param file $param_file")
 
-        dataset_name = dataset_name_from_results(results_dir)
         search_name = replace(basename(param_file), ".json" => "")
+        dataset_name = dataset_name_from_results_dir(results_dir)
         push!(dataset_entries, (; search_name, results_dir, dataset_name))
         haskey(dataset_paths, dataset_name) || (dataset_paths[dataset_name] = results_dir)
     end
