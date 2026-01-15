@@ -17,6 +17,23 @@ using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_
 # Default metric buckets used when no per-search overrides are configured.
 const DEFAULT_METRIC_GROUPS = ["identification", "CV", "eFDR", "runtime"]
 
+function parse_bool_env(name::AbstractString; default::Bool = false)
+    value = get(ENV, name, "")
+    if isempty(value)
+        return default
+    end
+
+    normalized = lowercase(strip(value))
+    if normalized in ("1", "true", "yes", "y", "on")
+        return true
+    elseif normalized in ("0", "false", "no", "n", "off")
+        return false
+    end
+
+    @warn "Unrecognized boolean environment value; using default" env=name value=value default=default
+    default
+end
+
 # Load an Arrow table that must exist for metrics computation.
 function read_required_table(path::AbstractString)
     isfile(path) || error("Required file not found: $path")
@@ -332,6 +349,7 @@ function archive_results(
     archive_root::AbstractString = "",
     dataset_name::AbstractString = "dataset",
     search_name::AbstractString = "search",
+    preserve_results::Bool = false,
 )
     if isempty(archive_root)
         @info "Archive root not provided; skipping move of regression outputs" results_dir=results_dir
@@ -340,6 +358,14 @@ function archive_results(
 
     target_dir = joinpath(archive_root, "results", basename(results_dir))
     mkpath(target_dir)
+
+    if preserve_results
+        for entry in readdir(results_dir; join = true)
+            cp(entry, joinpath(target_dir, basename(entry)); force = true, recursive = true)
+        end
+        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=target_dir
+        return
+    end
 
     if isfile(metrics_path)
         target_metrics = joinpath(target_dir, basename(metrics_path))
@@ -382,6 +408,7 @@ function compute_metrics_for_params_dir(
     experimental_design_path::AbstractString = "",
     three_proteome_designs_path::AbstractString = "",
     archive_root::AbstractString = "",
+    preserve_results::Bool = false,
 )
     isdir(params_dir) || error("Params directory does not exist: $params_dir")
 
@@ -432,26 +459,28 @@ function compute_metrics_for_params_dir(
 
         metrics === nothing && begin
             @warn "No metrics produced for search; archiving logs only" search=entry.search_name dataset=entry.dataset_name results_dir=entry.results_dir
-            cleanup_results_dir(entry.results_dir, output_path)
+            preserve_results || cleanup_results_dir(entry.results_dir, output_path)
             archive_results(
                 entry.results_dir,
                 output_path;
                 archive_root = archive_root,
                 dataset_name = entry.dataset_name,
                 search_name = entry.search_name,
+                preserve_results = preserve_results,
             )
             continue
         end
 
         if metrics isa AbstractDict && isempty(metrics)
             @warn "No metrics produced for search; archiving logs only" search=entry.search_name dataset=entry.dataset_name results_dir=entry.results_dir
-            cleanup_results_dir(entry.results_dir, output_path)
+            preserve_results || cleanup_results_dir(entry.results_dir, output_path)
             archive_results(
                 entry.results_dir,
                 output_path;
                 archive_root = archive_root,
                 dataset_name = entry.dataset_name,
                 search_name = entry.search_name,
+                preserve_results = preserve_results,
             )
             continue
         end
@@ -460,13 +489,14 @@ function compute_metrics_for_params_dir(
             JSON.print(io, metrics)
         end
 
-        cleanup_results_dir(entry.results_dir, output_path)
+        preserve_results || cleanup_results_dir(entry.results_dir, output_path)
         archive_results(
             entry.results_dir,
             output_path;
             archive_root = archive_root,
             dataset_name = entry.dataset_name,
             search_name = entry.search_name,
+            preserve_results = preserve_results,
         )
     end
 end
@@ -474,6 +504,7 @@ end
 function main()
     run_dir = get(ENV, "RUN_DIR", "")
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
+    preserve_results = parse_bool_env("PIONEER_PRESERVE_RESULTS")
     isempty(run_dir) && error("RUN_DIR must be set for regression metrics")
     archive_root = run_dir
 
@@ -488,6 +519,7 @@ function main()
             experimental_design_path = experimental_design_path,
             three_proteome_designs_path = three_proteome_designs_path,
             archive_root = archive_root,
+            preserve_results = preserve_results,
         )
         return
     end
