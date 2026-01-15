@@ -352,6 +352,7 @@ function archive_results(
     end
 
     target_dir = joinpath(archive_root, "results", dataset_name)
+    @info "Resolved archive destination for results" results_dir=results_dir dataset_name=dataset_name target_dir=target_dir
     mkpath(target_dir)
 
     if preserve_results
