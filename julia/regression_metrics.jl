@@ -353,20 +353,25 @@ function archive_results(
         return
     end
 
-    target_dir = joinpath(archive_root, "results", dataset_name)
-    @info "Resolved archive destination for results" results_dir=results_dir dataset_name=dataset_name target_dir=target_dir
-    mkpath(target_dir)
+    dataset_target_dir = joinpath(archive_root, "results", dataset_name)
+    search_target_dir = joinpath(dataset_target_dir, search_name)
+    @info "Resolved archive destination for results" results_dir=results_dir dataset_name=dataset_name search_name=search_name target_dir=search_target_dir
+    mkpath(search_target_dir)
 
     if preserve_results
         for entry in readdir(results_dir; join = true)
-            mv(entry, joinpath(target_dir, basename(entry)); force = true)
+            if isfile(entry) && abspath(entry) == abspath(metrics_path)
+                mv(entry, joinpath(dataset_target_dir, basename(entry)); force = true)
+            else
+                mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
+            end
         end
-        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=target_dir
+        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
         return
     end
 
     if isfile(metrics_path)
-        target_metrics = joinpath(target_dir, basename(metrics_path))
+        target_metrics = joinpath(dataset_target_dir, basename(metrics_path))
         mv(metrics_path, target_metrics; force = true)
         metrics_path = target_metrics
     end
@@ -375,19 +380,19 @@ function archive_results(
     if isdir(entrapment_dir)
         for entry in readdir(entrapment_dir; join = true)
             if isfile(entry) && endswith(lowercase(entry), ".png")
-                mv(entry, joinpath(target_dir, basename(entry)); force = true)
+                mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
             end
         end
     end
 
     qc_plots_dir = joinpath(results_dir, "qc_plots")
     if isdir(qc_plots_dir)
-        mv(qc_plots_dir, joinpath(target_dir, "qc_plots"); force = true)
+        mv(qc_plots_dir, joinpath(search_target_dir, "qc_plots"); force = true)
     end
 
     for entry in readdir(results_dir; join = true)
         if isfile(entry) && is_log_file(entry)
-            mv(entry, joinpath(target_dir, basename(entry)); force = true)
+            mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
         end
     end
 
@@ -397,7 +402,7 @@ function archive_results(
         @warn "Failed to remove original results directory after archiving" results_dir=results_dir error=err
     end
 
-    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=target_dir
+    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
 end
 
 function compute_metrics_for_params_dir(
