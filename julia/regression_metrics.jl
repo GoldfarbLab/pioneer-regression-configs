@@ -17,6 +17,23 @@ using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_
 # Default metric buckets used when no per-search overrides are configured.
 const DEFAULT_METRIC_GROUPS = ["identification", "CV", "eFDR", "runtime"]
 
+function parse_bool_env(name::AbstractString; default::Bool = false)
+    value = get(ENV, name, "")
+    if isempty(value)
+        return default
+    end
+
+    normalized = lowercase(strip(value))
+    if normalized in ("1", "true", "yes", "y", "on")
+        return true
+    elseif normalized in ("0", "false", "no", "n", "off")
+        return false
+    end
+
+    @warn "Unrecognized boolean environment value; using default" env=name value=value default=default
+    default
+end
+
 # Load an Arrow table that must exist for metrics computation.
 function read_required_table(path::AbstractString)
     isfile(path) || error("Required file not found: $path")
@@ -256,18 +273,15 @@ function results_dir_from_param(path::AbstractString)
     nothing
 end
 
-function dataset_name_from_results(results_dir::AbstractString)
-    base = basename(results_dir)
-    if isempty(base) || base == "." || base == ".."
-        parent_dir = dirname(results_dir)
-        if isempty(parent_dir) || parent_dir == results_dir
-            return base
-        end
-
-        return basename(parent_dir)
+function dataset_name_from_results_dir(results_dir::AbstractString)
+    normalized = normpath(results_dir)
+    parts = filter(!isempty, split(normalized, '/'))
+    if length(parts) >= 3
+        return parts[end - 1]
+    elseif !isempty(parts)
+        return parts[end]
     end
-
-    base
+    basename(normalized)
 end
 
 # Metrics files follow metrics_<dataset>_<search>.json; reports derive search from filename suffix.
@@ -278,7 +292,7 @@ end
 
 function is_log_file(path::AbstractString)
     lowercasepath = lowercase(path)
-    endswith(lowercasepath, ".log") || endswith(lowercasepath, ".log.gz")
+    endswith(lowercasepath, ".log")
 end
 
 function cleanup_entrapment_dir(entrapment_dir::AbstractString)
@@ -287,10 +301,29 @@ function cleanup_entrapment_dir(entrapment_dir::AbstractString)
     for entry in readdir(entrapment_dir; join = true)
         if isfile(entry)
             endswith(entry, ".png") && continue
-            rm(entry; force = true, recursive = true)
+            is_log_file(entry) && continue
+            safe_rm(entry; force = true, recursive = true)
+        elseif isdir(entry) && basename(entry) == "qc_plots"
+            continue
         else
-            rm(entry; force = true, recursive = true)
+            safe_rm(entry; force = true, recursive = true)
         end
+    end
+end
+
+function safe_rm(path::AbstractString; force::Bool = false, recursive::Bool = false)
+    try
+        rm(path; force = force, recursive = recursive)
+    catch err
+        @warn "Failed to remove path" path=path error=err
+    end
+end
+
+function safe_mv(src::AbstractString, dst::AbstractString; force::Bool = false)
+    try
+        mv(src, dst; force = force)
+    catch err
+        @warn "Failed to move path" src=src dst=dst error=err
     end
 end
 
@@ -315,9 +348,11 @@ function cleanup_results_dir(results_dir::AbstractString, metrics_path::Abstract
         elseif isdir(entry) && basename(entry) == "entrapment_analysis"
             cleanup_entrapment_dir(entry)
             continue
+        elseif isdir(entry) && basename(entry) == "qc_plots"
+            continue
         end
 
-        rm(entry; force = true, recursive = true)
+        safe_rm(entry; force = true, recursive = true)
     end
 end
 
@@ -327,18 +362,33 @@ function archive_results(
     archive_root::AbstractString = "",
     dataset_name::AbstractString = "dataset",
     search_name::AbstractString = "search",
+    preserve_results::Bool = false,
 )
     if isempty(archive_root)
         @info "Archive root not provided; skipping move of regression outputs" results_dir=results_dir
         return
     end
 
-    target_dir = joinpath(archive_root, "results", basename(results_dir))
-    mkpath(target_dir)
+    dataset_target_dir = joinpath(archive_root, "results", dataset_name)
+    search_target_dir = joinpath(dataset_target_dir, search_name)
+    @info "Resolved archive destination for results" results_dir=results_dir dataset_name=dataset_name search_name=search_name target_dir=search_target_dir
+    mkpath(search_target_dir)
+
+    if preserve_results
+        for entry in readdir(results_dir; join = true)
+            if isfile(entry) && abspath(entry) == abspath(metrics_path)
+                safe_mv(entry, joinpath(dataset_target_dir, basename(entry)); force = true)
+            else
+                safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
+            end
+        end
+        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
+        return
+    end
 
     if isfile(metrics_path)
-        target_metrics = joinpath(target_dir, basename(metrics_path))
-        mv(metrics_path, target_metrics; force = true)
+        target_metrics = joinpath(dataset_target_dir, basename(metrics_path))
+        safe_mv(metrics_path, target_metrics; force = true)
         metrics_path = target_metrics
     end
 
@@ -346,24 +396,25 @@ function archive_results(
     if isdir(entrapment_dir)
         for entry in readdir(entrapment_dir; join = true)
             if isfile(entry) && endswith(lowercase(entry), ".png")
-                mv(entry, joinpath(target_dir, basename(entry)); force = true)
+                safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
             end
         end
     end
 
+    qc_plots_dir = joinpath(results_dir, "qc_plots")
+    if isdir(qc_plots_dir)
+        safe_mv(qc_plots_dir, joinpath(search_target_dir, "qc_plots"); force = true)
+    end
+
     for entry in readdir(results_dir; join = true)
         if isfile(entry) && is_log_file(entry)
-            mv(entry, joinpath(target_dir, basename(entry)); force = true)
+            safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
         end
     end
 
-    try
-        rm(results_dir; force = true, recursive = true)
-    catch err
-        @warn "Failed to remove original results directory after archiving" results_dir=results_dir error=err
-    end
+    safe_rm(results_dir; force = true, recursive = true)
 
-    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=target_dir
+    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
 end
 
 function compute_metrics_for_params_dir(
@@ -372,6 +423,7 @@ function compute_metrics_for_params_dir(
     experimental_design_path::AbstractString = "",
     three_proteome_designs_path::AbstractString = "",
     archive_root::AbstractString = "",
+    preserve_results::Bool = false,
 )
     isdir(params_dir) || error("Params directory does not exist: $params_dir")
 
@@ -388,8 +440,8 @@ function compute_metrics_for_params_dir(
         results_dir = results_dir_from_param(param_file)
         results_dir === nothing && error("Missing results entry in search param file $param_file")
 
-        dataset_name = dataset_name_from_results(results_dir)
         search_name = replace(basename(param_file), ".json" => "")
+        dataset_name = dataset_name_from_results_dir(results_dir)
         push!(dataset_entries, (; search_name, results_dir, dataset_name))
         haskey(dataset_paths, dataset_name) || (dataset_paths[dataset_name] = results_dir)
     end
@@ -422,26 +474,28 @@ function compute_metrics_for_params_dir(
 
         metrics === nothing && begin
             @warn "No metrics produced for search; archiving logs only" search=entry.search_name dataset=entry.dataset_name results_dir=entry.results_dir
-            cleanup_results_dir(entry.results_dir, output_path)
+            preserve_results || cleanup_results_dir(entry.results_dir, output_path)
             archive_results(
                 entry.results_dir,
                 output_path;
                 archive_root = archive_root,
                 dataset_name = entry.dataset_name,
                 search_name = entry.search_name,
+                preserve_results = preserve_results,
             )
             continue
         end
 
         if metrics isa AbstractDict && isempty(metrics)
             @warn "No metrics produced for search; archiving logs only" search=entry.search_name dataset=entry.dataset_name results_dir=entry.results_dir
-            cleanup_results_dir(entry.results_dir, output_path)
+            preserve_results || cleanup_results_dir(entry.results_dir, output_path)
             archive_results(
                 entry.results_dir,
                 output_path;
                 archive_root = archive_root,
                 dataset_name = entry.dataset_name,
                 search_name = entry.search_name,
+                preserve_results = preserve_results,
             )
             continue
         end
@@ -450,13 +504,14 @@ function compute_metrics_for_params_dir(
             JSON.print(io, metrics)
         end
 
-        cleanup_results_dir(entry.results_dir, output_path)
+        preserve_results || cleanup_results_dir(entry.results_dir, output_path)
         archive_results(
             entry.results_dir,
             output_path;
             archive_root = archive_root,
             dataset_name = entry.dataset_name,
             search_name = entry.search_name,
+            preserve_results = preserve_results,
         )
     end
 end
@@ -464,13 +519,16 @@ end
 function main()
     run_dir = get(ENV, "RUN_DIR", "")
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
+    delete_results = parse_bool_env("PIONEER_DELETE_RESULTS")
+    preserve_results = !delete_results
     isempty(run_dir) && error("RUN_DIR must be set for regression metrics")
     archive_root = run_dir
 
     if !isempty(dataset_name)
-        params_dir = joinpath(run_dir, "regression-configs", "params", dataset_name)
-        metrics_config_path = joinpath(params_dir, "metrics.json")
-        experimental_design_path = params_dir
+        params_dir = joinpath(run_dir, "adjusted-params", dataset_name)
+        config_dir = joinpath(run_dir, "regression-configs", "params", dataset_name)
+        metrics_config_path = joinpath(config_dir, "metrics.json")
+        experimental_design_path = config_dir
         three_proteome_designs_path = experimental_design_path
         compute_metrics_for_params_dir(
             params_dir;
@@ -478,6 +536,7 @@ function main()
             experimental_design_path = experimental_design_path,
             three_proteome_designs_path = three_proteome_designs_path,
             archive_root = archive_root,
+            preserve_results = preserve_results,
         )
         return
     end
