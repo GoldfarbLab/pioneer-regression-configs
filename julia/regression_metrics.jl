@@ -302,12 +302,28 @@ function cleanup_entrapment_dir(entrapment_dir::AbstractString)
         if isfile(entry)
             endswith(entry, ".png") && continue
             is_log_file(entry) && continue
-            rm(entry; force = true, recursive = true)
+            safe_rm(entry; force = true, recursive = true)
         elseif isdir(entry) && basename(entry) == "qc_plots"
             continue
         else
-            rm(entry; force = true, recursive = true)
+            safe_rm(entry; force = true, recursive = true)
         end
+    end
+end
+
+function safe_rm(path::AbstractString; force::Bool = false, recursive::Bool = false)
+    try
+        rm(path; force = force, recursive = recursive)
+    catch err
+        @warn "Failed to remove path" path=path error=err
+    end
+end
+
+function safe_mv(src::AbstractString, dst::AbstractString; force::Bool = false)
+    try
+        mv(src, dst; force = force)
+    catch err
+        @warn "Failed to move path" src=src dst=dst error=err
     end
 end
 
@@ -336,7 +352,7 @@ function cleanup_results_dir(results_dir::AbstractString, metrics_path::Abstract
             continue
         end
 
-        rm(entry; force = true, recursive = true)
+        safe_rm(entry; force = true, recursive = true)
     end
 end
 
@@ -361,9 +377,9 @@ function archive_results(
     if preserve_results
         for entry in readdir(results_dir; join = true)
             if isfile(entry) && abspath(entry) == abspath(metrics_path)
-                mv(entry, joinpath(dataset_target_dir, basename(entry)); force = true)
+                safe_mv(entry, joinpath(dataset_target_dir, basename(entry)); force = true)
             else
-                mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
+                safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
             end
         end
         @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
@@ -372,7 +388,7 @@ function archive_results(
 
     if isfile(metrics_path)
         target_metrics = joinpath(dataset_target_dir, basename(metrics_path))
-        mv(metrics_path, target_metrics; force = true)
+        safe_mv(metrics_path, target_metrics; force = true)
         metrics_path = target_metrics
     end
 
@@ -380,27 +396,23 @@ function archive_results(
     if isdir(entrapment_dir)
         for entry in readdir(entrapment_dir; join = true)
             if isfile(entry) && endswith(lowercase(entry), ".png")
-                mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
+                safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
             end
         end
     end
 
     qc_plots_dir = joinpath(results_dir, "qc_plots")
     if isdir(qc_plots_dir)
-        mv(qc_plots_dir, joinpath(search_target_dir, "qc_plots"); force = true)
+        safe_mv(qc_plots_dir, joinpath(search_target_dir, "qc_plots"); force = true)
     end
 
     for entry in readdir(results_dir; join = true)
         if isfile(entry) && is_log_file(entry)
-            mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
+            safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
         end
     end
 
-    try
-        rm(results_dir; force = true, recursive = true)
-    catch err
-        @warn "Failed to remove original results directory after archiving" results_dir=results_dir error=err
-    end
+    safe_rm(results_dir; force = true, recursive = true)
 
     @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
 end
