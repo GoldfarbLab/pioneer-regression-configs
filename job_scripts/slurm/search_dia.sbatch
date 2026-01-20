@@ -18,7 +18,7 @@ set -euo pipefail
 : "${PIONEER_DATASET_NAME:?PIONEER_DATASET_NAME not set}"
 RUN_DIR="${RUN_DIR%/}"
 PIONEER_DIR="${RUN_DIR}/pioneer"
-PARAM_FILE="${RUN_DIR}/regression-configs/params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
+PARAM_FILE="${RUN_DIR}/adjusted-params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 
 export PIONEER_DIR
 JULIA=/usr/local/julia/bin/julia

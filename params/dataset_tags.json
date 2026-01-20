@@ -2,18 +2,20 @@
   "datasets": {
     "APMS_Astral": {
       "order": 1,
-      "tags": []
+      "tags": ["APMS_Astral"]
     },
     "EWZ_2P_MBR_Exploris": {
       "order": 6,
       "tags": [
-        "fast"
+        "fast",
+        "EWZ_2P_MBR_Exploris"
       ]
     },
     "KEAP1KO_Eclipse": {
       "order": 8,
       "tags": [
-        "fast"
+        "fast",
+         "KEAP1KO_Eclipse"
       ]
     },
     "MTAC_3P_Alternating": {
@@ -21,7 +23,7 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_3P_Alternating"
       ]
     },
     "MTAC_3P_Standard": {
@@ -29,7 +31,7 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_3P_Standard"
       ]
     },
     "MTAC_Yeast_Alternating_3min": {
@@ -37,7 +39,7 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_Yeast_Alternating_3min"
       ]
     },
     "MTAC_Yeast_Alternating_5min": {
@@ -45,7 +47,7 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_Yeast_Alternating_5min"
       ]
     },
     "MTAC_Yeast_Standard_3min": {
@@ -53,7 +55,7 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_Yeast_Standard_3min"
       ]
     },
     "MTAC_Yeast_Standard_5min": {
@@ -61,156 +63,175 @@
       "tags": [
         "fastest",
         "fast",
-        "test"
+        "MTAC_Yeast_Standard_5min"
       ]
     },
     "Olsen_Astral_3P": {
       "order": 4,
-      "tags": []
+      "tags": ["Olsen_Astral_3P"]
     },
     "Olsen_Exploris_3P": {
       "order": 7,
       "tags": [
-        "fast"
+        "fast",
+        "Olsen_Exploris_3P"
       ]
     },
     "SCIEX_3P": {
       "order": 5,
-      "tags": []
+      "tags": ["SCIEX_3P"]
     },
     "SCP_Astral_1000pg_12ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_1000pg_12ms"
       ]
     },
     "SCP_Astral_1000pg_24ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_1000pg_24ms"
       ]
     },
     "SCP_Astral_1000pg_3ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_1000pg_3ms"
       ]
     },
     "SCP_Astral_1000pg_6ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_1000pg_6ms"
       ]
     },
     "SCP_Astral_10ng_12ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_10ng_12ms"
       ]
     },
     "SCP_Astral_10ng_24ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_10ng_24ms"
       ]
     },
     "SCP_Astral_10ng_3ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_10ng_3ms"
       ]
     },
     "SCP_Astral_10ng_6ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_10ng_6ms"
       ]
     },
     "SCP_Astral_250pg_12ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_250pg_12ms"
       ]
     },
     "SCP_Astral_250pg_24ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_250pg_24ms"
       ]
     },
     "SCP_Astral_250pg_3ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_250pg_3ms"
       ]
     },
     "SCP_Astral_250pg_6ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_250pg_6ms"
       ]
     },
     "SCP_Astral_500pg_12ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_500pg_12ms"
       ]
     },
     "SCP_Astral_500pg_24ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_500pg_24ms"
       ]
     },
     "SCP_Astral_500pg_3ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_500pg_3ms"
       ]
     },
     "SCP_Astral_500pg_6ms": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_500pg_6ms"
       ]
     },
     "SCP_Astral_MBR": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "SCP_Astral_MBR"
       ]
     },
     "Seer_Astral_45": {
       "order": 3,
-      "tags": []
+      "tags": ["Seer_Astral_45"]
     },
     "Seer_Astral_single": {
       "order": 100,
       "tags": [
         "fastest",
-        "fast"
+        "fast",
+        "Seer_Astral_single"
       ]
     },
     "YEAST_KO_Astral": {
       "order": 2,
-      "tags": []
+      "tags": ["YEAST_KO_Astral"]
     }
   }
 }
