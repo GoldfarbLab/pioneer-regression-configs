@@ -180,7 +180,7 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
             plot_formats = [:png],
             paired_stride = 10,
             use_fast_paired = true,
-            plot_max_points = 200,
+            plot_bin_size = 0.00001,
         )
     catch err
         @warn "Precursor entrapment analysis run failed" error=err
