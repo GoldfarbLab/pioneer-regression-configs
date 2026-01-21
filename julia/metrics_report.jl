@@ -1130,7 +1130,7 @@ end
 function main()
     run_dir = get(ENV, "RUN_DIR", "")
     isempty(run_dir) && error("RUN_DIR must be set for metrics report")
-    metrics_root = joinpath(run_dir, "metrics")
+    metrics_root = normpath(joinpath(run_dir, "..", "..", "metrics"))
     release_root = joinpath(metrics_root, "release")
     develop_root = joinpath(metrics_root, "develop")
     current_root = joinpath(run_dir, "results")
