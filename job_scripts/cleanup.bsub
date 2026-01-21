@@ -16,7 +16,7 @@ set -euo pipefail
 : "${RUN_SUFFIX:?RUN_SUFFIX not set}"
 
 case "$RUN_DIR" in
-  /storage1/fs1/d.goldfarb/Active/Automation/Pioneer/run-*) ;;
+  /storage1/fs1/d.goldfarb/Active/Automation/Pioneer/runs/run-*) ;;
   *) echo "Refusing to clean unexpected run dir: $RUN_DIR" >&2; exit 1 ;;
 esac
 
