@@ -12,16 +12,15 @@ def collect_paths(config_root: Path) -> list[str]:
         with path.open() as handle:
             data = json.load(handle)
         search_paths = data.get("paths", {})
-        for key in ("ms_data", "library"):
-            value = search_paths.get(key)
-            if value:
-                paths.add(value)
+        value = search_paths.get("ms_data")
+        if value:
+            paths.add(value)
     return sorted(paths)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Collect ms_data and library paths from search JSON files."
+        description="Collect ms_data paths from search JSON files."
     )
     parser.add_argument(
         "config_root",

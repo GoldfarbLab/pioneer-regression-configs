@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/APMS_Astral",
-    "library": "/scratch2/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_astralAPMS-Oct-7-2025-entrapR1.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_astralAPMS-Oct-7-2025-entrapR1.poin",
     "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/APMS_Astral_Entrapment"
   },
   "output": {
