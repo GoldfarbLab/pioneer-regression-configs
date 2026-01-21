@@ -1127,25 +1127,12 @@ function build_report(
     String(take!(buffer))
 end
 
-function resolve_regression_root(run_dir::AbstractString)
-    candidates = [
-        normpath(joinpath(run_dir, "..")),
-        normpath(joinpath(run_dir, "..", "..")),
-    ]
-    for candidate in candidates
-        if isdir(joinpath(candidate, "metrics"))
-            return candidate
-        end
-    end
-    return last(candidates)
-end
-
 function main()
     run_dir = get(ENV, "RUN_DIR", "")
     isempty(run_dir) && error("RUN_DIR must be set for metrics report")
-    regression_root = resolve_regression_root(run_dir)
-    release_root = joinpath(regression_root, "metrics", "release")
-    develop_root = joinpath(regression_root, "metrics", "develop")
+    metrics_root = joinpath(run_dir, "metrics")
+    release_root = joinpath(metrics_root, "release")
+    develop_root = joinpath(metrics_root, "develop")
     current_root = joinpath(run_dir, "results")
 
     plots_scan_root = current_root
