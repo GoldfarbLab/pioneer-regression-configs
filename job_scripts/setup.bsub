@@ -58,13 +58,13 @@ copy_from_storage() {
 }
 
 if [[ -d "$config_root" ]]; then
-    echo "Scanning search configs under ${config_root} for ms_data/library paths."
+    echo "Scanning search configs under ${config_root} for ms_data paths."
     if [[ ! -f "${config_root}/scripts/collect_search_paths.py" ]]; then
         echo "ERROR: missing ${config_root}/scripts/collect_search_paths.py" >&2
         exit 1
     fi
     mapfile -t data_paths < <(python "${config_root}/scripts/collect_search_paths.py" "$config_root")
-    echo "Found ${#data_paths[@]} unique data/library paths to verify."
+    echo "Found ${#data_paths[@]} unique ms_data paths to verify."
 
     for scratch_path in "${data_paths[@]}"; do
         if [[ -f "$scratch_path" ]]; then

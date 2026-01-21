@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/Seer_Astral_single",
-    "library": "/scratch2/fs1/d.goldfarb/pioneer-regression/libraries/altimeter_human_len7o40_ch2o3_mc1_Seer_Nov20-2025.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_human_len7o40_ch2o3_mc1_Seer_Nov20-2025.poin",
     "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/Seer_Astral_single"
   },
   "output": {
