@@ -7,7 +7,7 @@
   "output": {
     "write_csv": false,
     "write_decoys": false,
-    "delete_temp": true,
+    "delete_temp": false,
     "plots_per_page": 12
   },
   "logging": {
