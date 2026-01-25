@@ -3,6 +3,7 @@
 #SBATCH --job-name=search
 #SBATCH --partition=general-cpu
 #SBATCH --nodes=1
+#SBATCH --nodelist=c2-node-001
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=16G
 #SBATCH --time=50:00:00
