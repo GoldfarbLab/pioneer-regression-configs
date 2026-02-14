@@ -19,7 +19,7 @@ PIONEER_DIR="${RUN_DIR}/pioneer"
 PIONEER_ENTRAPMENT_DIR="${RUN_DIR}/PioneerEntrapment.jl"
 export PIONEER_DIR PIONEER_ENTRAPMENT_DIR
 
-export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+export JULIA_DEPOT_PATH="${RUN_DIR}/julia-depot"
 export JULIA_NUM_PRECOMPILE_TASKS="${LSB_DJOB_NUMPROC}"
 export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
 
