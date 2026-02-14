@@ -14,9 +14,11 @@
 set -euo pipefail
 
 : "${RUN_DIR:?RUN_DIR not set}"
+RUN_DIR="${RUN_DIR%/}"
 
 export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
-export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+export JULIA_DEPOT_PATH="${RUN_DIR}/julia-depot"
+mkdir -p "$JULIA_DEPOT_PATH"
 
 repo_dir="${RUN_DIR%/}/regression-configs"
 report_project="${repo_dir}/julia"
