@@ -92,7 +92,6 @@ if [[ ! -d "$PIONEER_DIR" ]]; then
 fi
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
-    Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
     Pkg.instantiate()
     Pkg.precompile()
 '
