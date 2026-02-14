@@ -23,7 +23,8 @@ PARAM_FILE="${RUN_DIR}/adjusted-params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 export PIONEER_DIR
 JULIA=/usr/local/julia/bin/julia
 
-export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+export JULIA_DEPOT_PATH="${RUN_DIR}/julia-depot"
+mkdir -p "$JULIA_DEPOT_PATH"
 export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"

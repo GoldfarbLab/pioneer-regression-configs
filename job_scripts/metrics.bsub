@@ -18,7 +18,8 @@ set -euo pipefail
 RUN_DIR="${RUN_DIR%/}"
 
 export JULIA_NUM_THREADS="${LSB_DJOB_NUMPROC}"
-export JULIA_DEPOT_PATH=/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/julia-depot
+export JULIA_DEPOT_PATH="${RUN_DIR}/julia-depot"
+mkdir -p "$JULIA_DEPOT_PATH"
 export ENTRAPMENT_ANALYSES_PATH="${RUN_DIR}/PioneerEntrapment.jl"
 export PIONEER_DELETE_RESULTS="${PIONEER_DELETE_RESULTS:-true}"
 
