@@ -85,19 +85,35 @@ else
     echo "WARNING: config root not found at ${config_root}" >&2
 fi
 
+echo "Precompiling Pioneer project"
+if [[ ! -d "$PIONEER_DIR" ]]; then
+    echo "ERROR: Pioneer project not found at ${PIONEER_DIR}" >&2
+    exit 1
+fi
 "$JULIA" --project="$PIONEER_DIR" -e '
     using Pkg
-    Pkg.develop(path=ENV["PIONEER_ENTRAPMENT_DIR"])
     Pkg.instantiate()
     Pkg.precompile()
 '
 
-if [[ -d "$metrics_project" ]]; then
-    "$JULIA" --project="$metrics_project" -e '
-        using Pkg
-        Pkg.instantiate()
-        Pkg.precompile()
-    '
-else
-    echo "WARNING: regression metrics project not found at ${metrics_project}" >&2
+echo "Precompiling PioneerEntrapment project"
+if [[ ! -d "$PIONEER_ENTRAPMENT_DIR" ]]; then
+    echo "ERROR: PioneerEntrapment project not found at ${PIONEER_ENTRAPMENT_DIR}" >&2
+    exit 1
 fi
+"$JULIA" --project="$PIONEER_ENTRAPMENT_DIR" -e '
+    using Pkg
+    Pkg.instantiate()
+    Pkg.precompile()
+'
+
+echo "Precompiling regression metrics project"
+if [[ ! -d "$metrics_project" ]]; then
+    echo "ERROR: regression metrics project not found at ${metrics_project}" >&2
+    exit 1
+fi
+"$JULIA" --project="$metrics_project" -e '
+    using Pkg
+    Pkg.instantiate()
+    Pkg.precompile()
+'
