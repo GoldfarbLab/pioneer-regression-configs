@@ -34,6 +34,16 @@ function spectral_library_path_from_config(config::Dict, dataset_dir::AbstractSt
     nothing
 end
 
+function match_between_runs_enabled(config::Dict)
+    global_section = get(config, "global", nothing)
+    if global_section isa AbstractDict
+        value = get(global_section, "match_between_runs", nothing)
+        value isa Bool && return value
+    end
+
+    return true
+end
+
 function arrow_column_names(path::AbstractString)
     try
         table = Arrow.Table(path; convert=false)
@@ -44,14 +54,19 @@ function arrow_column_names(path::AbstractString)
     end
 end
 
-function precursor_score_pairs(path::AbstractString)
+function precursor_score_pairs(path::AbstractString; match_between_runs::Bool=true)
     cols = arrow_column_names(path)
     cols === nothing && return nothing
 
-    required_pairs = [
-        (:MBR_boosted_global_prob, :MBR_boosted_global_qval),
-        (:MBR_boosted_prec_prob, :MBR_boosted_qval),
-    ]
+    required_pairs = match_between_runs ?
+        [
+            (:MBR_boosted_global_prob, :MBR_boosted_global_qval),
+            (:MBR_boosted_prec_prob, :MBR_boosted_qval),
+        ] :
+        [
+            (:global_prob, :global_qval),
+            (:prec_prob, :qval),
+        ]
 
     available_pairs = [pair for pair in required_pairs if all(col -> col in cols, pair)]
     if isempty(available_pairs)
@@ -137,6 +152,7 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
 
     lib_path = spectral_library_path_from_config(config, dataset_dir)
     lib_path === nothing && return nothing
+    match_between_runs = match_between_runs_enabled(config)
 
     repo_path = get(ENV, "ENTRAPMENT_ANALYSES_PATH", joinpath(@__DIR__, "..", "..", "PioneerEntrapment.jl"))
     entrapment_module = load_entrapment_module(repo_path)
@@ -157,7 +173,7 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
         return nothing
     end
 
-    precursor_pairs = precursor_score_pairs(precursor_results_path)
+    precursor_pairs = precursor_score_pairs(precursor_results_path; match_between_runs=match_between_runs)
     protein_pairs = protein_score_pairs(protein_results_path)
 
     if precursor_pairs === nothing || protein_pairs === nothing
@@ -268,22 +284,31 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
 
     summaries = Dict{String, Any}()
 
-    precursor_summary = summary_from_arrow(
-        joinpath(output_dir, "prec_results_with_efdr.arrow"),
-        :MBR_boosted_qval,
-        :MBR_boosted_prec_prob_paired_efdr,
-    )
-    if precursor_summary !== nothing
-        summaries["precursors"] = precursor_summary
+    precursor_global_pair = findfirst(pair -> occursin("global", String(pair[1])), precursor_pairs)
+    precursor_perfile_pair = findfirst(pair -> !occursin("global", String(pair[1])), precursor_pairs)
+
+    if precursor_perfile_pair !== nothing
+        pair = precursor_pairs[precursor_perfile_pair]
+        precursor_summary = summary_from_arrow(
+            joinpath(output_dir, "prec_results_with_efdr.arrow"),
+            pair[2],
+            Symbol(String(pair[1]) * "_paired_efdr"),
+        )
+        if precursor_summary !== nothing
+            summaries["precursors"] = precursor_summary
+        end
     end
 
-    global_precursor_summary = summary_from_arrow(
-        joinpath(output_dir, "global_results_with_efdr.arrow"),
-        :MBR_boosted_global_qval,
-        :MBR_boosted_global_prob_paired_efdr,
-    )
-    if global_precursor_summary !== nothing
-        summaries["global_precursors"] = global_precursor_summary
+    if precursor_global_pair !== nothing
+        pair = precursor_pairs[precursor_global_pair]
+        global_precursor_summary = summary_from_arrow(
+            joinpath(output_dir, "global_results_with_efdr.arrow"),
+            pair[2],
+            Symbol(String(pair[1]) * "_paired_efdr"),
+        )
+        if global_precursor_summary !== nothing
+            summaries["global_precursors"] = global_precursor_summary
+        end
     end
 
     protein_summary = summary_from_arrow(
