@@ -41,7 +41,7 @@ function match_between_runs_enabled(config::Dict)
         value isa Bool && return value
     end
 
-    return true
+    return false
 end
 
 function arrow_column_names(path::AbstractString)
