@@ -71,7 +71,7 @@ function precursor_score_pairs(path::AbstractString; match_between_runs::Bool=tr
     available_pairs = [pair for pair in required_pairs if all(col -> col in cols, pair)]
     if isempty(available_pairs)
         missing_columns_by_pair = Dict(pair => [col for col in pair if col ∉ cols] for pair in required_pairs)
-        @warn "No compatible precursor score/q-value columns found for entrapment analysis" path=path missing_columns_by_pair=missing_columns_by_pair available_columns=join(string.(collect(cols)), ", ")
+        @warn "No compatible precursor score/q-value columns found for entrapment analysis" path=path match_between_runs=match_between_runs required_pairs=required_pairs missing_columns_by_pair=missing_columns_by_pair available_columns=join(string.(collect(cols)), ", ")
         return nothing
     end
 
@@ -173,6 +173,8 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
         @warn "Skipping entrapment metrics; missing required arrow outputs" missing_arrows=missing_arrows
         return nothing
     end
+
+    @info "Entrapment precursor selection mode" dataset=dataset_name config_path=config_path match_between_runs=match_between_runs
 
     precursor_pairs = precursor_score_pairs(precursor_results_path; match_between_runs=match_between_runs)
     protein_pairs = protein_score_pairs(protein_results_path)
