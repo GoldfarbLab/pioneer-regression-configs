@@ -147,6 +147,7 @@ function load_entrapment_module(repo_path::AbstractString)
 end
 
 function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::AbstractString)
+    config_path = joinpath(dataset_dir, "config.json")
     config = load_dataset_config(dataset_dir)
     config === nothing && return nothing
 
@@ -179,6 +180,8 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
     if precursor_pairs === nothing || protein_pairs === nothing
         return nothing
     end
+
+    @info "Entrapment precursor column selection" dataset=dataset_name config_path=config_path match_between_runs=match_between_runs precursor_score_qval_pairs=precursor_pairs
 
     output_dir = joinpath(dataset_dir, "entrapment_analysis")
     mkpath(output_dir)
