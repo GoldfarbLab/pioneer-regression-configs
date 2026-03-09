@@ -1,0 +1,37 @@
+{
+  "paths": {
+    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/APMS_Astral",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_astralAPMS-Oct-7-2025-entrapR1.poin",
+    "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/APMS_Astral_Entrapment"
+  },
+  "output": {
+    "write_csv": false,
+    "write_decoys": false,
+    "delete_temp": true,
+    "plots_per_page": 12
+  },
+  "logging": {
+    "debug_console_level": 0
+  },
+  "global": {
+    "scoring": {
+      "q_value_threshold": 0.01
+    },
+    "match_between_runs": false,
+    "ms1_quant": false
+  },
+  "first_search": {
+    "fragment_settings": {
+      "min_score": 15
+    }
+  },
+  "acquisition": {
+    "nce": 26,
+    "quad_transmission": {
+      "fit_from_data": true
+    }
+  },
+  "maxLFQ": {
+    "run_to_run_normalization": false
+  }
+}

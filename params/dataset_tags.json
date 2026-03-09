@@ -232,6 +232,13 @@
     "YEAST_KO_Astral": {
       "order": 2,
       "tags": ["YEAST_KO_Astral"]
+    },
+    "MacCoss_Eclipse_Normalization": {
+      "order": 2,
+      "tags": [
+        "fast",
+        "MacCoss_Eclipse_Normalization"
+      ]
     }
   }
 }

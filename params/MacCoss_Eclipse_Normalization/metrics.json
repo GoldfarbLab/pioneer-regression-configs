@@ -1,0 +1,5 @@
+{
+    "search_yesNorm": ["runtime", "identification", "CV"],
+    "search_noNorm": ["runtime", "identification", "CV"],
+    "search_entrap": ["eFDR"]
+}
