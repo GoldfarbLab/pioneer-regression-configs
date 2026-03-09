@@ -1,8 +1,8 @@
 {
   "paths": {
-    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/APMS_Astral",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_astralAPMS-Oct-7-2025.poin",
-    "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/APMS_Astral"
+    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/MacCoss_Eclipse_Normalization",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/Mouse_MacCoss_03-09-2026.poin",
+    "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/MacCoss_Eclipse_Normalization_noNorm"
   },
   "output": {
     "write_csv": false,
