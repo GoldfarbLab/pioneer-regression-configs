@@ -28,19 +28,13 @@ function ftr_metrics_for_table(
         table_label = table_label,
     )
 
-    false_transfer_numerator = max(combined_human_only_yeast_ids - split_human_only_yeast_ids, 0)
-    false_transfer_denominator = max(combined_total_ids - split_total_ids, 0)
-    ftr = false_transfer_denominator > 0 ? false_transfer_numerator / false_transfer_denominator : 0.0
+    additional_yeast_IDs = max(combined_human_only_yeast_ids - split_human_only_yeast_ids, 0)
+    additional_IDs = max(combined_total_ids - split_total_ids, 0)
+    ftr = additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
 
     return Dict(
-        "combined_total_ids" => combined_total_ids,
-        "split_total_ids" => split_total_ids,
-        "split_human_only_total_ids" => split_human_only_total_ids,
-        "split_human_yeast_total_ids" => split_human_yeast_total_ids,
-        "combined_human_only_yeast_ids" => combined_human_only_yeast_ids,
-        "split_human_only_yeast_ids" => split_human_only_yeast_ids,
-        "false_transfer_numerator" => false_transfer_numerator,
-        "false_transfer_denominator" => false_transfer_denominator,
+        "additional_yeast_IDs" => additional_yeast_IDs,
+        "additional_IDs" => additional_IDs,
         "false_transfer_rate" => ftr,
     )
 end

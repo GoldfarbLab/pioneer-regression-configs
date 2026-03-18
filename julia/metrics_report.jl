@@ -542,7 +542,11 @@ function include_metric(metric::AbstractString)
     end
 
     if startswith(metric, "ftr.")
-        return occursin(".precursors.", metric) || occursin(".protein_groups.", metric)
+        return (
+            endswith(metric, ".false_transfer_rate") ||
+            endswith(metric, ".additional_yeast_IDs") ||
+            endswith(metric, ".additional_IDs")
+        ) && (occursin(".precursors.", metric) || occursin(".protein_groups.", metric))
     end
 
     if parse_fold_change_fc_variance_metric(metric) !== nothing
