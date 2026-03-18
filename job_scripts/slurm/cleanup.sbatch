@@ -10,6 +10,7 @@
 #SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
 #SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
 #SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
+#SBATCH --exclude=c2-node-065
 
 set -euo pipefail
 : "${RUN_DIR:?RUN_DIR not set}"
