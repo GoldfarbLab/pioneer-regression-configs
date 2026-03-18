@@ -556,6 +556,44 @@ function include_metric(metric::AbstractString)
     return true
 end
 
+function canonical_metric_search(metric::AbstractString, dataset::AbstractString, search::AbstractString)
+    if startswith(metric, "ftr.") && dataset == "EWZ_2P_MBR_Exploris" && search in ("search_MBR", "search_combined")
+        return "search_combined"
+    end
+
+    search
+end
+
+function metric_search_aliases(metric::AbstractString, dataset::AbstractString, search::AbstractString)
+    if startswith(metric, "ftr.") && dataset == "EWZ_2P_MBR_Exploris" && search == "search_combined"
+        return ["search_combined", "search_MBR"]
+    end
+
+    [search]
+end
+
+function metric_value_for_entry(
+    version_data::AbstractDict{String, Any},
+    version::AbstractString,
+    metric::AbstractString,
+    search::AbstractString,
+    dataset::AbstractString,
+)
+    searches_entry = get(version_data, version, Dict{String, Any}())
+    searches_entry isa AbstractDict || return missing
+
+    for search_alias in metric_search_aliases(metric, dataset, search)
+        metrics_by_search = get(searches_entry, search_alias, Dict{String, Any}())
+        metrics_by_search isa AbstractDict || continue
+        metrics = get(metrics_by_search, dataset, Dict{String, Any}())
+        metrics isa AbstractDict || continue
+        haskey(metrics, metric) || continue
+        return get(metrics, metric, missing)
+    end
+
+    missing
+end
+
 function collect_fold_change_entries(version_data::AbstractDict{String, Any}, versions::Vector{String})
     entries = Dict{String, Set{Tuple{String, String, String, String}}}()
     for version in versions
@@ -939,20 +977,6 @@ function build_report(
     )
     println(buffer, "</div>")
 
-    dataset_entries = Set{Tuple{String, String}}()
-    for version in versions
-        searches_entry = get(version_data, version, Dict{String, Any}())
-        if searches_entry isa AbstractDict
-            for (search, datasets) in pairs(searches_entry)
-                datasets isa AbstractDict || continue
-                for dataset in keys(datasets)
-                    push!(dataset_entries, (String(search), String(dataset)))
-                end
-            end
-        end
-    end
-    entries_sorted = sort(collect(dataset_entries); by = entry -> (entry[1], entry[2]))
-
     all_metrics = Set{String}()
     for version in versions
         searches_entry = get(version_data, version, Dict{String, Any}())
@@ -987,6 +1011,20 @@ function build_report(
     special_written = Dict(:keap1 => false, :fold_change => false, :fold_change_fc_variance => false)
 
     for metric in ordered_metrics(filtered_metrics)
+        metric_entries = Set{Tuple{String, String}}()
+        for version in versions
+            searches_entry = get(version_data, version, Dict{String, Any}())
+            searches_entry isa AbstractDict || continue
+            for (search, datasets) in pairs(searches_entry)
+                datasets isa AbstractDict || continue
+                for dataset in keys(datasets)
+                    search_name = canonical_metric_search(metric, String(dataset), String(search))
+                    push!(metric_entries, (search_name, String(dataset)))
+                end
+            end
+        end
+        entries_sorted = sort(collect(metric_entries); by = entry -> (entry[1], entry[2]))
+
         metric_rank = get(
             order_map,
             normalized_group(metric_group(metric)),
@@ -1063,14 +1101,7 @@ function build_report(
         for (search, dataset) in entries_sorted
             values = Vector{Any}(undef, length(versions))
             for (idx, version) in enumerate(versions)
-                searches_entry = get(version_data, version, Dict{String, Any}())
-                metrics_by_search = searches_entry isa AbstractDict ?
-                    get(searches_entry, search, Dict{String, Any}()) :
-                    Dict{String, Any}()
-                metrics = metrics_by_search isa AbstractDict ?
-                    get(metrics_by_search, dataset, Dict{String, Any}()) :
-                    Dict{String, Any}()
-                values[idx] = metrics isa AbstractDict ? get(metrics, metric, missing) : missing
+                values[idx] = metric_value_for_entry(version_data, version, metric, search, dataset)
             end
 
             has_value = any(value -> !(value === missing || value === nothing), values)
