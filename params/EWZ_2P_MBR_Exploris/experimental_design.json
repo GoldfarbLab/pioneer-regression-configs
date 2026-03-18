@@ -43,6 +43,9 @@
     "GO114_DIA_MBRAnalysis_HelaStd_200ngperuL_plus_YeastStd_20ngperuL_Inj20": "human_yeast"
   },
   "false_transfer_rate": {
-    "human_only_condition": "human_only"
+    "human_only_condition": "human_only",
+    "combined_search": "search_combined",
+    "human_only_search": "search_human_only",
+    "human_yeast_search": "search_human_yeast"
   }
 }

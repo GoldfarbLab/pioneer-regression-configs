@@ -1,8 +1,8 @@
 {
     "paths": {
-        "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/EWZ_2P_MBR_Exploris",
+        "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/EWZ_2P_MBR_Exploris_YeastHuman",
         "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/altimeter_YeastHuman_len7o40_ch2o3_mc1_Eclipse_Sep17-2025.poin",
-        "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/EWZ_2P_MBR_Exploris"
+        "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/EWZ_2P_MBR_Exploris_YeastHuman"
     },
     "output": {
         "write_csv": false,
@@ -18,7 +18,6 @@
         "scoring": {
             "q_value_threshold": 0.01
         },
-        "match_between_runs": false,
         "ms1_quant": false
     },
     "first_search": {

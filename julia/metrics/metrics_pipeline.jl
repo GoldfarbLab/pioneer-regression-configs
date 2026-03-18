@@ -185,9 +185,11 @@ function compute_dataset_metrics(
     dataset_dir::AbstractString,
     dataset_name::AbstractString;
     metric_groups::AbstractVector{<:AbstractString} = DEFAULT_METRIC_GROUPS,
+    search_name::AbstractString = "",
     experimental_design::Dict{String, Any} = Dict{String, Any}(),
     three_proteome_designs = nothing,
     dataset_paths::Dict{String, String} = Dict{String, String}(),
+    search_paths::Dict{String, String} = Dict{String, String}(),
 )
     requested_groups = Set(replace.(lowercase.(metric_groups), "-" => "_"))
     need_identification = "identification" in requested_groups
@@ -307,10 +309,11 @@ function compute_dataset_metrics(
             @info "Starting false transfer rate metrics" dataset=dataset_name
             ftr_metrics = compute_ftr_metrics(
                 dataset_name,
+                search_name,
                 precursors_wide,
                 protein_groups_wide,
                 experimental_design,
-                dataset_paths,
+                search_paths,
             )
         end
 

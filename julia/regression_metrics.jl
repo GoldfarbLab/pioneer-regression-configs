@@ -435,6 +435,7 @@ function compute_metrics_for_params_dir(
 
     dataset_entries = NamedTuple{(:search_name, :results_dir, :dataset_name)}[]
     dataset_paths = Dict{String, String}()
+    search_paths = Dict{String, String}()
 
     for param_file in param_files
         results_dir = results_dir_from_param(param_file)
@@ -444,6 +445,7 @@ function compute_metrics_for_params_dir(
         dataset_name = dataset_name_from_results_dir(results_dir)
         push!(dataset_entries, (; search_name, results_dir, dataset_name))
         haskey(dataset_paths, dataset_name) || (dataset_paths[dataset_name] = results_dir)
+        search_paths[search_name] = results_dir
     end
 
     isempty(dataset_entries) && error("No valid parameter files remain after parsing results paths")
@@ -465,9 +467,11 @@ function compute_metrics_for_params_dir(
             entry.results_dir,
             entry.dataset_name;
             metric_groups = metric_groups,
+            search_name = entry.search_name,
             experimental_design = experimental_design,
             three_proteome_designs = three_proteome_designs,
             dataset_paths = dataset_paths,
+            search_paths = search_paths,
         )
 
         output_path = output_metrics_path(entry.results_dir, entry.dataset_name, entry.search_name)

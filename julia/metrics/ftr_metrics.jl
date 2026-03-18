@@ -1,147 +1,142 @@
 using DataFrames
 
 function ftr_metrics_for_table(
-    mbr_df::DataFrame,
-    no_mbr_df::DataFrame,
-    mbr_quant_cols::AbstractVector{<:Union{Symbol, String}},
-    no_mbr_quant_cols::AbstractVector{<:Union{Symbol, String}},
+    combined_df::DataFrame,
+    human_only_df::DataFrame,
+    human_yeast_df::DataFrame,
+    combined_quant_cols::AbstractVector{<:Union{Symbol, String}},
+    human_only_quant_cols::AbstractVector{<:Union{Symbol, String}},
+    human_yeast_quant_cols::AbstractVector{<:Union{Symbol, String}},
     human_only_runs::AbstractVector{<:AbstractString};
     table_label::AbstractString,
 )
-    yeast_human_only_mbr = count_yeast_ids(mbr_df, mbr_quant_cols, human_only_runs; table_label = table_label)
-    yeast_human_only_no_mbr = count_yeast_ids(no_mbr_df, no_mbr_quant_cols, human_only_runs; table_label = table_label)
+    combined_total_ids = count_total_ids(combined_df, combined_quant_cols, nothing; table_label = table_label)
+    split_human_only_total_ids = count_total_ids(human_only_df, human_only_quant_cols, nothing; table_label = table_label)
+    split_human_yeast_total_ids = count_total_ids(human_yeast_df, human_yeast_quant_cols, nothing; table_label = table_label)
+    split_total_ids = split_human_only_total_ids + split_human_yeast_total_ids
 
-    total_ids_human_only_mbr = count_total_ids(mbr_df, mbr_quant_cols, human_only_runs; table_label = table_label)
-    total_ids_human_only_no_mbr = count_total_ids(no_mbr_df, no_mbr_quant_cols, human_only_runs; table_label = table_label)
+    combined_human_only_yeast_ids = count_yeast_ids(
+        combined_df,
+        combined_quant_cols,
+        human_only_runs;
+        table_label = table_label,
+    )
+    split_human_only_yeast_ids = count_yeast_ids(
+        human_only_df,
+        human_only_quant_cols,
+        nothing;
+        table_label = table_label,
+    )
 
-    additional_yeast_in_human_only = max(yeast_human_only_mbr - yeast_human_only_no_mbr, 0)
-    additional_ids_in_human_only = max(total_ids_human_only_mbr - total_ids_human_only_no_mbr, 0)
-    ftr = additional_ids_in_human_only > 0 ? additional_yeast_in_human_only / additional_ids_in_human_only : 0.0
+    false_transfer_numerator = max(combined_human_only_yeast_ids - split_human_only_yeast_ids, 0)
+    false_transfer_denominator = max(combined_total_ids - split_total_ids, 0)
+    ftr = false_transfer_denominator > 0 ? false_transfer_numerator / false_transfer_denominator : 0.0
 
     return Dict(
+        "combined_total_ids" => combined_total_ids,
+        "split_total_ids" => split_total_ids,
+        "split_human_only_total_ids" => split_human_only_total_ids,
+        "split_human_yeast_total_ids" => split_human_yeast_total_ids,
+        "combined_human_only_yeast_ids" => combined_human_only_yeast_ids,
+        "split_human_only_yeast_ids" => split_human_only_yeast_ids,
+        "false_transfer_numerator" => false_transfer_numerator,
+        "false_transfer_denominator" => false_transfer_denominator,
         "false_transfer_rate" => ftr,
     )
 end
 
-function paired_mbr_dataset_paths(
-    dataset_name::AbstractString,
-    dataset_paths::Dict{String, String},
-)
-    if occursin("_noMBR_", dataset_name)
-        mbr_name = replace(dataset_name, "_noMBR_" => "_MBR_")
-        mbr_path = get(dataset_paths, mbr_name, nothing)
-        nombr_path = get(dataset_paths, dataset_name, nothing)
-        (mbr_path === nothing || nombr_path === nothing) && return nothing
-        return (mbr_name, mbr_path, dataset_name, nombr_path)
-    elseif occursin("_MBR_", dataset_name)
-        nombr_name = replace(dataset_name, "_MBR_" => "_noMBR_")
-        mbr_path = get(dataset_paths, dataset_name, nothing)
-        nombr_path = get(dataset_paths, nombr_name, nothing)
-        (mbr_path === nothing || nombr_path === nothing) && return nothing
-        return (dataset_name, mbr_path, nombr_name, nombr_path)
+function false_transfer_rate_config(entry)
+    if entry isa AbstractDict
+        ftr_config = get(entry, "false_transfer_rate", nothing)
+        if ftr_config isa AbstractDict
+            return Dict{String, Any}(String(k) => v for (k, v) in ftr_config)
+        end
     end
 
-    nothing
+    Dict{String, Any}()
 end
 
-function human_only_condition_from_design(entry, alt_entry)
-    for source in (entry, alt_entry)
-        if source isa AbstractDict
-            ftr_config = get(source, "false_transfer_rate", nothing)
-            if ftr_config isa AbstractDict
-                condition = get(ftr_config, "human_only_condition", nothing)
-                condition !== nothing && return String(condition)
-            end
+function config_string(
+    config::AbstractDict,
+    key::AbstractString,
+    default::Union{Nothing, AbstractString} = nothing,
+)
+    value = get(config, key, default)
+    value isa AbstractString && return String(value)
 
-            condition = get(source, "human_only_condition", nothing)
-            condition !== nothing && return String(condition)
-        end
+    default === nothing && return nothing
+    return String(default)
+end
+
+function human_only_condition_from_design(entry)
+    if entry isa AbstractDict
+        ftr_config = false_transfer_rate_config(entry)
+        condition = config_string(ftr_config, "human_only_condition")
+        condition !== nothing && return condition
+
+        condition = get(entry, "human_only_condition", nothing)
+        condition isa AbstractString && return String(condition)
     end
 
     return "human_only"
 end
 
-function compute_ftr_metrics(
-    dataset_name::AbstractString,
-    precursors_wide::DataFrame,
-    protein_groups_wide::DataFrame,
-    experimental_design::Dict{String, Any},
-    dataset_paths::Dict{String, String},
+function table_for_search(
+    search_name::AbstractString,
+    current_search_name::AbstractString,
+    current_df::DataFrame,
+    search_paths::Dict{String, String},
+    filename::AbstractString;
+    table_label::AbstractString,
 )
-    paired_paths = paired_mbr_dataset_paths(dataset_name, dataset_paths)
-    paired_paths === nothing && begin
-        @warn "FTR metrics require paired MBR and noMBR datasets" dataset=dataset_name
+    if search_name == current_search_name
+        return current_df
+    end
+
+    search_path = get(search_paths, search_name, nothing)
+    search_path === nothing && begin
+        @warn "Missing configured FTR comparison search; skipping" search=search_name table=table_label available_searches=sort(collect(keys(search_paths)))
         return nothing
     end
 
-    mbr_name, mbr_path, nombr_name, nombr_path = paired_paths
-
-    precursors_mbr = if dataset_name == mbr_name
-        precursors_wide
-    else
-        arrow_path = joinpath(mbr_path, "precursors_wide.arrow")
-        isfile(arrow_path) || begin
-            @warn "Missing precursors for MBR dataset; skipping FTR metrics" dataset=mbr_name path=arrow_path
-            return nothing
-        end
-        read_required_table(arrow_path)
+    arrow_path = joinpath(search_path, filename)
+    isfile(arrow_path) || begin
+        @warn "Missing FTR comparison table; skipping" search=search_name table=table_label path=arrow_path
+        return nothing
     end
 
-    precursors_no_mbr = if dataset_name == nombr_name
-        precursors_wide
-    else
-        arrow_path = joinpath(nombr_path, "precursors_wide.arrow")
-        isfile(arrow_path) || begin
-            @warn "Missing precursors for noMBR dataset; skipping FTR metrics" dataset=nombr_name path=arrow_path
-            return nothing
-        end
-        read_required_table(arrow_path)
-    end
+    read_required_table(arrow_path)
+end
 
-    protein_groups_mbr = if dataset_name == mbr_name
-        protein_groups_wide
-    else
-        arrow_path = joinpath(mbr_path, "protein_groups_wide.arrow")
-        isfile(arrow_path) || begin
-            @warn "Missing protein groups for MBR dataset; skipping FTR metrics" dataset=mbr_name path=arrow_path
-            return nothing
-        end
-        read_required_table(arrow_path)
-    end
-
-    protein_groups_no_mbr = if dataset_name == nombr_name
-        protein_groups_wide
-    else
-        arrow_path = joinpath(nombr_path, "protein_groups_wide.arrow")
-        isfile(arrow_path) || begin
-            @warn "Missing protein groups for noMBR dataset; skipping FTR metrics" dataset=nombr_name path=arrow_path
-            return nothing
-        end
-        read_required_table(arrow_path)
-    end
-
-    mbr_quant_cols = quant_column_names_from_proteins(precursors_mbr)
-    nombr_quant_cols = quant_column_names_from_proteins(precursors_no_mbr)
-
-    protein_mbr_quant_cols = quant_column_names_from_proteins(protein_groups_mbr)
-    protein_nombr_quant_cols = quant_column_names_from_proteins(protein_groups_no_mbr)
-
-    alt_dataset_name = mbr_name == dataset_name ? nombr_name : mbr_name
-    groups = run_groups_for_dataset(experimental_design, dataset_name)
-    alt_groups = run_groups_for_dataset(experimental_design, alt_dataset_name)
+function compute_ftr_metrics(
+    dataset_name::AbstractString,
+    search_name::AbstractString,
+    precursors_wide::DataFrame,
+    protein_groups_wide::DataFrame,
+    experimental_design::Dict{String, Any},
+    search_paths::Dict{String, String},
+)
     entry = experimental_design_entry(experimental_design, dataset_name)
-    alt_entry = experimental_design_entry(experimental_design, alt_dataset_name)
-    human_only_condition = human_only_condition_from_design(entry, alt_entry)
+    ftr_config = false_transfer_rate_config(entry)
+    combined_search = config_string(ftr_config, "combined_search")
+    human_only_search = config_string(ftr_config, "human_only_search")
+    human_yeast_search = config_string(ftr_config, "human_yeast_search")
 
-    primary_groups = isempty(groups) ? alt_groups : groups
-    secondary_groups = isempty(groups) ? groups : alt_groups
+    if combined_search === nothing || human_only_search === nothing || human_yeast_search === nothing
+        @warn "FTR metrics require configured combined and split search names" dataset=dataset_name search=search_name config=ftr_config
+        return nothing
+    end
 
-    human_only_runs = get(primary_groups, human_only_condition, String[])
-    isempty(human_only_runs) && (human_only_runs = get(secondary_groups, human_only_condition, String[]))
+    if search_name != combined_search
+        @info "Skipping FTR metrics for non-combined search" dataset=dataset_name search=search_name combined_search=combined_search
+        return nothing
+    end
 
+    groups = run_groups_for_dataset(experimental_design, dataset_name)
+    human_only_condition = human_only_condition_from_design(entry)
+    human_only_runs = get(groups, human_only_condition, String[])
     if isempty(human_only_runs) && human_only_condition != "human_only"
-        human_only_runs = get(primary_groups, "human_only", String[])
-        isempty(human_only_runs) && (human_only_runs = get(secondary_groups, "human_only", String[]))
+        human_only_runs = get(groups, "human_only", String[])
     end
 
     if isempty(human_only_runs)
@@ -149,20 +144,88 @@ function compute_ftr_metrics(
         return nothing
     end
 
+    precursors_combined = table_for_search(
+        combined_search,
+        search_name,
+        precursors_wide,
+        search_paths,
+        "precursors_wide.arrow";
+        table_label = "precursors",
+    )
+    precursors_combined === nothing && return nothing
+    precursors_human_only = table_for_search(
+        human_only_search,
+        search_name,
+        precursors_wide,
+        search_paths,
+        "precursors_wide.arrow";
+        table_label = "precursors",
+    )
+    precursors_human_only === nothing && return nothing
+    precursors_human_yeast = table_for_search(
+        human_yeast_search,
+        search_name,
+        precursors_wide,
+        search_paths,
+        "precursors_wide.arrow";
+        table_label = "precursors",
+    )
+    precursors_human_yeast === nothing && return nothing
+
+    protein_groups_combined = table_for_search(
+        combined_search,
+        search_name,
+        protein_groups_wide,
+        search_paths,
+        "protein_groups_wide.arrow";
+        table_label = "protein_groups",
+    )
+    protein_groups_combined === nothing && return nothing
+    protein_groups_human_only = table_for_search(
+        human_only_search,
+        search_name,
+        protein_groups_wide,
+        search_paths,
+        "protein_groups_wide.arrow";
+        table_label = "protein_groups",
+    )
+    protein_groups_human_only === nothing && return nothing
+    protein_groups_human_yeast = table_for_search(
+        human_yeast_search,
+        search_name,
+        protein_groups_wide,
+        search_paths,
+        "protein_groups_wide.arrow";
+        table_label = "protein_groups",
+    )
+    protein_groups_human_yeast === nothing && return nothing
+
+    combined_quant_cols = quant_column_names_from_proteins(precursors_combined)
+    human_only_quant_cols = quant_column_names_from_proteins(precursors_human_only)
+    human_yeast_quant_cols = quant_column_names_from_proteins(precursors_human_yeast)
+
+    protein_combined_quant_cols = quant_column_names_from_proteins(protein_groups_combined)
+    protein_human_only_quant_cols = quant_column_names_from_proteins(protein_groups_human_only)
+    protein_human_yeast_quant_cols = quant_column_names_from_proteins(protein_groups_human_yeast)
+
     precursor_metrics = ftr_metrics_for_table(
-        precursors_mbr,
-        precursors_no_mbr,
-        mbr_quant_cols,
-        nombr_quant_cols,
+        precursors_combined,
+        precursors_human_only,
+        precursors_human_yeast,
+        combined_quant_cols,
+        human_only_quant_cols,
+        human_yeast_quant_cols,
         human_only_runs;
         table_label = "precursors",
     )
 
     protein_metrics = ftr_metrics_for_table(
-        protein_groups_mbr,
-        protein_groups_no_mbr,
-        protein_mbr_quant_cols,
-        protein_nombr_quant_cols,
+        protein_groups_combined,
+        protein_groups_human_only,
+        protein_groups_human_yeast,
+        protein_combined_quant_cols,
+        protein_human_only_quant_cols,
+        protein_human_yeast_quant_cols,
         human_only_runs;
         table_label = "protein_groups",
     )
