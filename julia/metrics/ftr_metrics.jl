@@ -28,9 +28,10 @@ function ftr_metrics_for_table(
         table_label = table_label,
     )
 
-    additional_yeast_IDs = max(combined_human_only_yeast_ids - split_human_only_yeast_ids, 0)
-    additional_IDs = max(combined_total_ids - split_total_ids, 0)
-    ftr = additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
+    additional_yeast_IDs = combined_human_only_yeast_ids - split_human_only_yeast_ids
+    additional_IDs = combined_total_ids - split_total_ids
+    ftr = additional_yeast_IDs < 0 || additional_IDs < 0 ? 0.0 :
+        additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
 
     return Dict(
         "additional_yeast_IDs" => additional_yeast_IDs,
