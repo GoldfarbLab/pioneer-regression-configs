@@ -1,5 +1,49 @@
 using DataFrames
 
+function count_long_table_ids(
+    df::DataFrame,
+    run_names = nothing;
+    table_label::AbstractString,
+)
+    if run_names === nothing
+        return nrow(df)
+    end
+
+    file_col = file_name_column(df; table_label = table_label)
+    file_col === nothing && return 0
+
+    allowed_runs = Set(String.(run_names))
+    count(df[:, file_col]) do val
+        val !== missing && String(val) in allowed_runs
+    end
+end
+
+function count_long_table_yeast_ids(
+    df::DataFrame,
+    run_names = nothing;
+    table_label::AbstractString,
+)
+    species_col = species_column(df; table_label = table_label)
+    species_col === nothing && return 0
+
+    file_col = nothing
+    allowed_runs = Set{String}()
+    if run_names !== nothing
+        file_col = file_name_column(df; table_label = table_label)
+        file_col === nothing && return 0
+        union!(allowed_runs, String.(run_names))
+    end
+
+    count(eachrow(df)) do row
+        row[species_col] !== missing || return false
+        is_yeast_only_species(row[species_col]) || return false
+        if file_col === nothing
+            return true
+        end
+        row[file_col] !== missing && String(row[file_col]) in allowed_runs
+    end
+end
+
 function ftr_metrics_for_table(
     combined_df::DataFrame,
     human_only_df::DataFrame,
@@ -25,6 +69,40 @@ function ftr_metrics_for_table(
         human_only_df,
         human_only_quant_cols,
         nothing;
+        table_label = table_label,
+    )
+
+    additional_yeast_IDs = combined_human_only_yeast_ids - split_human_only_yeast_ids
+    additional_IDs = combined_total_ids - split_total_ids
+    ftr = additional_yeast_IDs < 0 || additional_IDs < 0 ? 0.0 :
+        additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
+
+    return Dict(
+        "additional_yeast_IDs" => additional_yeast_IDs,
+        "additional_IDs" => additional_IDs,
+        "false_transfer_rate" => ftr,
+    )
+end
+
+function protein_ftr_metrics_for_long_table(
+    combined_df::DataFrame,
+    human_only_df::DataFrame,
+    human_yeast_df::DataFrame,
+    human_only_runs::AbstractVector{<:AbstractString};
+    table_label::AbstractString,
+)
+    combined_total_ids = count_long_table_ids(combined_df; table_label = table_label)
+    split_human_only_total_ids = count_long_table_ids(human_only_df; table_label = table_label)
+    split_human_yeast_total_ids = count_long_table_ids(human_yeast_df; table_label = table_label)
+    split_total_ids = split_human_only_total_ids + split_human_yeast_total_ids
+
+    combined_human_only_yeast_ids = count_long_table_yeast_ids(
+        combined_df,
+        human_only_runs;
+        table_label = table_label,
+    )
+    split_human_only_yeast_ids = count_long_table_yeast_ids(
+        human_only_df;
         table_label = table_label,
     )
 
@@ -107,6 +185,7 @@ function compute_ftr_metrics(
     dataset_name::AbstractString,
     search_name::AbstractString,
     precursors_wide::DataFrame,
+    protein_groups_long::DataFrame,
     protein_groups_wide::DataFrame,
     experimental_design::Dict{String, Any},
     search_paths::Dict{String, String},
@@ -195,6 +274,34 @@ function compute_ftr_metrics(
     )
     protein_groups_human_yeast === nothing && return nothing
 
+    protein_groups_long_combined = table_for_search(
+        combined_search,
+        search_name,
+        protein_groups_long,
+        search_paths,
+        "protein_groups_long.arrow";
+        table_label = "protein_groups_long",
+    )
+    protein_groups_long_combined === nothing && return nothing
+    protein_groups_long_human_only = table_for_search(
+        human_only_search,
+        search_name,
+        protein_groups_long,
+        search_paths,
+        "protein_groups_long.arrow";
+        table_label = "protein_groups_long",
+    )
+    protein_groups_long_human_only === nothing && return nothing
+    protein_groups_long_human_yeast = table_for_search(
+        human_yeast_search,
+        search_name,
+        protein_groups_long,
+        search_paths,
+        "protein_groups_long.arrow";
+        table_label = "protein_groups_long",
+    )
+    protein_groups_long_human_yeast === nothing && return nothing
+
     combined_quant_cols = quant_column_names_from_proteins(precursors_combined)
     human_only_quant_cols = quant_column_names_from_proteins(precursors_human_only)
     human_yeast_quant_cols = quant_column_names_from_proteins(precursors_human_yeast)
@@ -214,15 +321,12 @@ function compute_ftr_metrics(
         table_label = "precursors",
     )
 
-    protein_metrics = ftr_metrics_for_table(
-        protein_groups_combined,
-        protein_groups_human_only,
-        protein_groups_human_yeast,
-        protein_combined_quant_cols,
-        protein_human_only_quant_cols,
-        protein_human_yeast_quant_cols,
+    protein_metrics = protein_ftr_metrics_for_long_table(
+        protein_groups_long_combined,
+        protein_groups_long_human_only,
+        protein_groups_long_human_yeast,
         human_only_runs;
-        table_label = "protein_groups",
+        table_label = "protein_groups_long",
     )
 
     return Dict(

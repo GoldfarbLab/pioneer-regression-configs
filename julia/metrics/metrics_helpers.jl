@@ -75,6 +75,17 @@ function species_column(df::DataFrame; table_label::AbstractString = "table")
     names(df)[species_col_index]
 end
 
+function file_name_column(df::DataFrame; table_label::AbstractString = "table")
+    file_col_index = findfirst(name -> String(name) == "file_name", names(df))
+    if file_col_index === nothing
+        available_columns = join(string.(names(df)), ", ")
+        @warn "Table missing file_name column; skipping file-scoped metrics" table=table_label available_columns=available_columns
+        return nothing
+    end
+
+    names(df)[file_col_index]
+end
+
 function is_yeast_only_species(val)
     val === missing && return false
     parts = split(String(val), ";")
@@ -208,7 +219,7 @@ end
 
 export NON_QUANT_COLUMNS
 export is_numeric_column, quant_column_names_from_proteins, drop_non_quant_columns, select_quant_columns
-export gene_names_column, species_column
+export gene_names_column, species_column, file_name_column
 export is_yeast_only_species, unique_species_value
 export median_for_columns, mean_for_columns, condition_columns, resolve_run_columns
 export count_species_ids, count_yeast_ids, count_nonyeast_ids, count_total_ids

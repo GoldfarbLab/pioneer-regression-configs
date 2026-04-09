@@ -10,7 +10,7 @@ include(joinpath(@__DIR__, "metrics", "entrapment_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "three_proteome_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "ftr_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "metrics_pipeline.jl"))
-using .RegressionMetricsHelpers: condition_columns, count_nonyeast_ids, count_species_ids, count_total_ids, count_yeast_ids, gene_names_column, mean_for_columns, quant_column_names_from_proteins, select_quant_columns, species_column, unique_species_value
+using .RegressionMetricsHelpers: condition_columns, count_nonyeast_ids, count_species_ids, count_total_ids, count_yeast_ids, file_name_column, gene_names_column, is_yeast_only_species, mean_for_columns, quant_column_names_from_proteins, select_quant_columns, species_column, unique_species_value
 using .EntrapmentMetrics: compute_entrapment_metrics
 using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_dataset, fold_change_metrics_for_table, gene_counts_metrics_by_run, load_experimental_design, load_three_proteome_designs, normalize_metric_label, run_groups_for_dataset, three_proteome_design_entry
 
@@ -612,4 +612,6 @@ function main()
     end
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end

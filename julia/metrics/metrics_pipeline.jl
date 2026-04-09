@@ -17,6 +17,21 @@ function identification_metrics(
     precursor_metrics, protein_metrics
 end
 
+function protein_quantification_metrics(
+    protein_groups_long::DataFrame;
+    table_label::AbstractString = "protein_groups_long",
+)
+    abundance_col_index = findfirst(name -> lowercase(String(name)) == "abundance", names(protein_groups_long))
+    if abundance_col_index === nothing
+        available_columns = join(string.(names(protein_groups_long)), ", ")
+        @warn "Table missing abundance column; skipping protein quantification total" table=table_label available_columns=available_columns
+        return nothing
+    end
+
+    abundance_col = names(protein_groups_long)[abundance_col_index]
+    Dict("total" => count(!ismissing, protein_groups_long[:, abundance_col]))
+end
+
 function cv_metrics(
     precursors_wide::DataFrame,
     protein_groups_wide::DataFrame,
@@ -193,6 +208,7 @@ function compute_dataset_metrics(
 )
     requested_groups = Set(replace.(lowercase.(metric_groups), "-" => "_"))
     need_identification = "identification" in requested_groups
+    need_quantification = ("quantification" in requested_groups) || need_identification
     need_cv = "cv" in requested_groups
     need_keap1 = "keap1" in requested_groups
     need_ftr = "ftr" in requested_groups
@@ -200,12 +216,14 @@ function compute_dataset_metrics(
     need_three_proteome =
         ("fold_change" in requested_groups) ||
         ("three_proteome" in requested_groups)
-    need_table_metrics = need_identification || need_cv || need_keap1 || need_ftr || need_three_proteome
+    need_table_metrics =
+        need_identification || need_quantification || need_cv || need_keap1 || need_ftr || need_three_proteome
 
     dataset_three_proteome_designs = need_three_proteome ? three_proteome_designs : nothing
 
     precursor_id_metrics = nothing
     protein_id_metrics = nothing
+    protein_quant_metrics = nothing
     keap1_precursor_metrics = nothing
     keap1_protein_metrics = nothing
     ftr_metrics = nothing
@@ -217,6 +235,11 @@ function compute_dataset_metrics(
             [
                 "precursors_long.arrow",
                 "precursors_wide.arrow",
+                "protein_groups_long.arrow",
+                "protein_groups_wide.arrow",
+            ]
+        elseif need_quantification
+            [
                 "protein_groups_long.arrow",
                 "protein_groups_wide.arrow",
             ]
@@ -237,6 +260,9 @@ function compute_dataset_metrics(
         if need_identification || need_cv || need_keap1 || need_ftr
             precursors_long = read_required_table(joinpath(dataset_dir, "precursors_long.arrow"))
             precursors_wide = read_required_table(joinpath(dataset_dir, "precursors_wide.arrow"))
+        end
+
+        if need_identification || need_quantification
             protein_groups_long = read_required_table(joinpath(dataset_dir, "protein_groups_long.arrow"))
         end
 
@@ -261,6 +287,11 @@ function compute_dataset_metrics(
                 protein_groups_long,
                 protein_groups_wide,
             )
+        end
+
+        if need_quantification
+            @info "Starting quantification metrics" dataset=dataset_name
+            protein_quant_metrics = protein_quantification_metrics(protein_groups_long)
         end
 
         if need_cv
@@ -291,6 +322,13 @@ function compute_dataset_metrics(
                 table_label = "protein_groups_wide",
                 dataset_name = dataset_name,
             )
+        elseif need_quantification
+            protein_wide_metrics = compute_wide_metrics(
+                protein_groups_wide,
+                protein_quant_col_names;
+                table_label = "protein_groups_wide",
+                dataset_name = dataset_name,
+            )
         end
 
         if need_keap1
@@ -311,6 +349,7 @@ function compute_dataset_metrics(
                 dataset_name,
                 search_name,
                 precursors_wide,
+                protein_groups_long,
                 protein_groups_wide,
                 experimental_design,
                 search_paths,
@@ -358,13 +397,22 @@ function compute_dataset_metrics(
             precursors_identification["data_completeness"] = precursor_wide_metrics.data_completeness
         end
 
-        if protein_wide_metrics !== nothing
-            protein_identification["complete_rows"] = protein_wide_metrics.complete_rows
-            protein_identification["data_completeness"] = protein_wide_metrics.data_completeness
-        end
-
         !isempty(precursors_identification) && (identification_metrics_block["precursors"] = precursors_identification)
         !isempty(protein_identification) && (identification_metrics_block["protein_groups"] = protein_identification)
+    end
+
+    quantification_metrics_block = Dict{String, Any}()
+    if need_quantification
+        protein_quantification = Dict{String, Any}()
+
+        protein_quant_metrics !== nothing && merge!(protein_quantification, protein_quant_metrics)
+
+        if protein_wide_metrics !== nothing
+            protein_quantification["complete_rows"] = protein_wide_metrics.complete_rows
+            protein_quantification["data_completeness"] = protein_wide_metrics.data_completeness
+        end
+
+        !isempty(protein_quantification) && (quantification_metrics_block["protein_groups"] = protein_quantification)
     end
 
     cv_metrics_block = Dict{String, Any}()
@@ -380,6 +428,7 @@ function compute_dataset_metrics(
     end
 
     !isempty(identification_metrics_block) && (metrics["identification"] = identification_metrics_block)
+    !isempty(quantification_metrics_block) && (metrics["quantification"] = quantification_metrics_block)
     !isempty(cv_metrics_block) && (metrics["cv"] = cv_metrics_block)
     if need_keap1
         keap1_metrics_block = Dict{String, Any}()

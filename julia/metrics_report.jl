@@ -515,11 +515,12 @@ end
 function metric_group_order()
     Dict(
         "identification" => 1,
-        "entrapment" => 2,
-        "ftr" => 3,
-        "keap1" => 4,
-        "cv" => 5,
-        "fold_change" => 6,
+        "quantification" => 2,
+        "entrapment" => 3,
+        "ftr" => 4,
+        "keap1" => 5,
+        "cv" => 6,
+        "fold_change" => 7,
         "runtime" => 8,
     )
 end
@@ -1059,7 +1060,7 @@ function build_report(
                 ["Δ " * current_version * " vs " * version for version in previous_versions],
             )
             group = normalized_group(metric_group(metric))
-            if group in ("identification", "runtime")
+            if group in ("identification", "quantification", "runtime")
                 append!(
                     header_parts,
                     ["% " * current_version * " vs " * version for version in previous_versions],
@@ -1074,7 +1075,7 @@ function build_report(
         end
         chart_mode = ""
         group = normalized_group(metric_group(metric))
-        if group == "identification" || group == "runtime"
+        if group == "identification" || group == "quantification" || group == "runtime"
             chart_mode = "percent_delta"
         elseif group == "entrapment"
             chart_mode = "raw"
