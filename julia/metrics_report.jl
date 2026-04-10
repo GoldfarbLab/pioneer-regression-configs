@@ -521,7 +521,8 @@ function metric_group_order()
         "keap1" => 5,
         "cv" => 6,
         "fold_change" => 7,
-        "runtime" => 8,
+        "fold_change_variance" => 8,
+        "runtime" => 9,
     )
 end
 
@@ -1002,11 +1003,11 @@ function build_report(
     fold_change_fc_variance_entries = collect_fold_change_fc_variance_entries(version_data, versions)
     keap1_entries = collect_keap1_entries(version_data, versions)
     order_map = metric_group_order()
-    fold_change_rank = get(order_map, "fold_change", length(order_map) + 1)
-    fold_change_fc_variance_rank = fold_change_rank + 1
-    keap1_rank = get(order_map, "keap1", length(order_map) + 1)
+    fold_change_rank = order_map["fold_change"]
+    fold_change_variance_rank = order_map["fold_change_variance"]
+    keap1_rank = order_map["keap1"]
     special_blocks = sort(
-        [(keap1_rank, :keap1), (fold_change_rank, :fold_change), (fold_change_fc_variance_rank, :fold_change_fc_variance)];
+        [(keap1_rank, :keap1), (fold_change_rank, :fold_change), (fold_change_variance_rank, :fold_change_fc_variance)];
         by = first,
     )
     special_written = Dict(:keap1 => false, :fold_change => false, :fold_change_fc_variance => false)
@@ -1026,11 +1027,8 @@ function build_report(
         end
         entries_sorted = sort(collect(metric_entries); by = entry -> (entry[1], entry[2]))
 
-        metric_rank = get(
-            order_map,
-            normalized_group(metric_group(metric)),
-            length(order_map) + 1,
-        )
+        group = normalized_group(metric_group(metric))
+        metric_rank = get(order_map, group, length(order_map) + 1)
         for (rank, label) in special_blocks
             if !special_written[label] && metric_rank > rank
                 if label == :keap1
