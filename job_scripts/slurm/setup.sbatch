@@ -3,8 +3,8 @@
 #SBATCH --job-name=setup
 #SBATCH --partition=general-cpu
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=8G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=16G
 #SBATCH --time=24:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.11.7
 #SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
