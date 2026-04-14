@@ -1,7 +1,7 @@
 {
   "paths": {
     "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/YEAST_KO",
-    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/yeast_Apr11-2026_entrap.poin",
+    "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/yeast_Apr11-2026_entrap_ham2.poin",
     "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/YEAST_KO_Astral_Entrapment"
   },
   "output": {
