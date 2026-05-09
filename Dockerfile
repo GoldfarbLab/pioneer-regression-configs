@@ -1,4 +1,5 @@
-FROM dennisgoldfarb/julia-python:1.11.7
+ARG JULIA_VERSION=1.12.6
+FROM julia:${JULIA_VERSION}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
