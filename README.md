@@ -56,7 +56,9 @@ with `srun --container-image`. They use `PIONEER_REGRESSION_CONFIGS_DIR` to loca
 this repository when running inside containers. Raw MS data is read directly from
 `/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/`; logs, search results,
 and other generated outputs remain under the standard scratch paths in
-`/scratch2/fs1/d.goldfarb/pioneer-regression/`.
+`/scratch2/fs1/d.goldfarb/pioneer-regression/`. Setup jobs do not pre-stage or
+validate raw data paths; missing input data is reported by the search job that
+needs it.
 
 ## Dataset tags
 

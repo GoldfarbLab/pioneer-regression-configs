@@ -27,41 +27,8 @@ export JULIA_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 mkdir -p "$JULIA_DEPOT_PATH"
 
 metrics_project="${RUN_DIR}/regression-configs/julia"
-config_root="${RUN_DIR}/regression-configs"
 
 JULIA=/usr/local/julia/bin/julia
-
-has_entries() {
-    local target_dir="$1"
-    find "$target_dir" -mindepth 1 -maxdepth 1 -print -quit | grep -q .
-}
-
-if [[ -d "$config_root" ]]; then
-    echo "Scanning search configs under ${config_root} for ms_data paths."
-    if [[ ! -f "${config_root}/scripts/collect_search_paths.py" ]]; then
-        echo "ERROR: missing ${config_root}/scripts/collect_search_paths.py" >&2
-        exit 1
-    fi
-    mapfile -t data_paths < <(python3 "${config_root}/scripts/collect_search_paths.py" "$config_root")
-    echo "Found ${#data_paths[@]} unique ms_data paths to verify."
-
-    for data_path in "${data_paths[@]}"; do
-        if [[ -f "$data_path" ]]; then
-            echo "Verified file exists: $data_path"
-            continue
-        fi
-
-        if [[ -d "$data_path" ]] && has_entries "$data_path"; then
-            echo "Verified directory has entries: $data_path"
-            continue
-        fi
-
-        echo "ERROR: ms_data path is missing or empty: $data_path" >&2
-        exit 1
-    done
-else
-    echo "WARNING: config root not found at ${config_root}" >&2
-fi
 
 echo "Precompiling Pioneer project"
 if [[ ! -d "$PIONEER_DIR" ]]; then
