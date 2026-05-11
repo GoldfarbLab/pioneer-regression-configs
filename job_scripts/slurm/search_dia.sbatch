@@ -33,7 +33,7 @@ export OMP_THREAD_LIMIT="${SLURM_CPUS_PER_TASK:-1}"
 export OMP_DYNAMIC=FALSE
 export OPENBLAS_NUM_THREADS=1
 
-"$JULIA" --project="$PIONEER_DIR" -e '
+"$JULIA" --check-bounds=yes --project="$PIONEER_DIR" -e '
     using Pioneer
     SearchDIA(ENV["PARAM_FILE"])
 '
