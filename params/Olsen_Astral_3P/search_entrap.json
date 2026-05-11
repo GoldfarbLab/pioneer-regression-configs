@@ -1,6 +1,6 @@
 {
   "paths": {
-    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/Olsen_Astral_3P",
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/Olsen_Astral_3P",
     "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/3P_May7-2026_bitvec_10_entrap.poin",
     "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/Olsen_Astral_3P_Entrapment"
   },

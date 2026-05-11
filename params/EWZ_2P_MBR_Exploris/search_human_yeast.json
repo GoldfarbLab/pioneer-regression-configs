@@ -1,6 +1,6 @@
 {
     "paths": {
-        "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/EWZ_2P_MBR_Exploris_YeastHuman",
+        "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/EWZ_2P_MBR_Exploris_YeastHuman",
         "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/yeast_human_May7-2026_bitvec_10.poin",
         "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/EWZ_2P_MBR_Exploris_YeastHuman"
     },

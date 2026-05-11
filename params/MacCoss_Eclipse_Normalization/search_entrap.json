@@ -1,6 +1,6 @@
 {
   "paths": {
-    "ms_data": "/scratch2/fs1/d.goldfarb/pioneer-regression/data/MacCoss_Eclipse_Normalization",
+    "ms_data": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/MacCoss_Eclipse_Normalization",
     "library": "/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/libraries/mouse_May7-2026_bitvec_10_entrap.poin",
     "results": "/scratch2/fs1/d.goldfarb/pioneer-regression/search/MacCoss_Eclipse_Normalization_Entrapment"
   },

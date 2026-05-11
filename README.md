@@ -53,8 +53,10 @@ archived).
 The scripts in `job_scripts/` are intended for LSF execution, while
 `job_scripts/slurm/` contains SLURM equivalents that wrap Julia/Python entrypoints
 with `srun --container-image`. They use `PIONEER_REGRESSION_CONFIGS_DIR` to locate
-this repository when running inside containers and expect Pioneer results under
-the standard regression paths in `/scratch2/fs1/d.goldfarb/pioneer-regression/`.
+this repository when running inside containers. Raw MS data is read directly from
+`/storage1/fs1/d.goldfarb/Active/Automation/Pioneer/data/`; logs, search results,
+and other generated outputs remain under the standard scratch paths in
+`/scratch2/fs1/d.goldfarb/pioneer-regression/`.
 
 ## Dataset tags
 
