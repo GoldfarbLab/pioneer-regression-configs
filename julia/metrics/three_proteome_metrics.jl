@@ -4,7 +4,7 @@ using DataFrames
 using JSON
 using Statistics
 
-using ..RegressionMetricsHelpers: condition_columns, gene_names_column, mean_for_columns, select_quant_columns, species_column, unique_species_value
+using ..RegressionMetricsHelpers: condition_columns, gene_names_column, mean_for_complete_columns, select_quant_columns, species_column, unique_species_value
 
 function normalize_design_dict(design::AbstractDict)
     mapped_design = Dict{String, Any}()
@@ -244,8 +244,8 @@ function fold_change_log_ratios_for_table(
             expected_ratio = get(pair.expected, species, nothing)
             expected_ratio === nothing && continue
 
-            numerator_mean = mean_for_columns(row, numerator_columns)
-            denominator_mean = mean_for_columns(row, denominator_columns)
+            numerator_mean = mean_for_complete_columns(row, numerator_columns)
+            denominator_mean = mean_for_complete_columns(row, denominator_columns)
 
             if numerator_mean === missing || denominator_mean === missing || denominator_mean == 0
                 continue

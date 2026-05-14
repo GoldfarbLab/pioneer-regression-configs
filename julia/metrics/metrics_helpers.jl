@@ -112,6 +112,12 @@ function mean_for_columns(row::DataFrameRow, cols::AbstractVector)
     mean(values)
 end
 
+function mean_for_complete_columns(row::DataFrameRow, cols::AbstractVector)
+    values = [row[c] for c in cols]
+    (isempty(values) || any(ismissing, values)) && return missing
+    mean(values)
+end
+
 function condition_columns(
     quant_col_names::AbstractVector{<:Union{Symbol, String}},
     run_to_condition::Dict{String, String},
@@ -221,7 +227,7 @@ export NON_QUANT_COLUMNS
 export is_numeric_column, quant_column_names_from_proteins, drop_non_quant_columns, select_quant_columns
 export gene_names_column, species_column, file_name_column
 export is_yeast_only_species, unique_species_value
-export median_for_columns, mean_for_columns, condition_columns, resolve_run_columns
+export median_for_columns, mean_for_columns, mean_for_complete_columns, condition_columns, resolve_run_columns
 export count_species_ids, count_yeast_ids, count_nonyeast_ids, count_total_ids
 
 end
