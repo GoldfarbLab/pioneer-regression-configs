@@ -49,7 +49,7 @@ function runtime_minutes_from_report(path::AbstractString)
 
     for line in eachline(path)
         if startswith(line, "Total Runtime:")
-            m = match(r"^Total Runtime:\s*([0-9]+(?:\.[0-9]+)?)\s+minutes", line)
+            m = match(r"^Total Runtime:\s*([0-9]+(?:\.[0-9]+)?)\s+(?:minutes?|mins?|min)\b", line)
             if m !== nothing
                 return parse(Float64, m.captures[1])
             end
