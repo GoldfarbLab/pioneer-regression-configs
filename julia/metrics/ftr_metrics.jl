@@ -163,6 +163,7 @@ function table_for_search(
     table_label::AbstractString,
 )
     if search_name == current_search_name
+        @info "Using current search table for FTR comparison" search=search_name table=table_label filename=filename
         return current_df
     end
 
@@ -178,7 +179,11 @@ function table_for_search(
         return nothing
     end
 
-    read_required_table(arrow_path)
+    read_required_table(
+        arrow_path;
+        table_label = string("ftr_", table_label),
+        search_name = search_name,
+    )
 end
 
 function compute_ftr_metrics(
@@ -217,6 +222,7 @@ function compute_ftr_metrics(
         @warn "No human-only runs provided for FTR metrics; skipping" dataset=dataset_name expected_condition=human_only_condition
         return nothing
     end
+    @info "Resolved FTR comparison searches" dataset=dataset_name search=search_name combined_search=combined_search human_only_search=human_only_search human_yeast_search=human_yeast_search human_only_runs=human_only_runs
 
     precursors_combined = table_for_search(
         combined_search,

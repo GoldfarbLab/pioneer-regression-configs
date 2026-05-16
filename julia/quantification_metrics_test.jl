@@ -5,6 +5,18 @@ using DataFrames
 
 include(joinpath(@__DIR__, "regression_metrics.jl"))
 
+function capture_stderr(f::Function)
+    path = tempname()
+    open(path, "w+") do io
+        redirect_stderr(io) do
+            f()
+        end
+        flush(io)
+        seekstart(io)
+        return read(io, String)
+    end
+end
+
 function write_test_tables(
     dataset_dir::AbstractString;
     abundance_values = Union{Missing, Float64}[10.0, missing, 5.0, missing],
@@ -89,6 +101,20 @@ function run_quantification_tests()
         @assert !haskey(missing_abundance_metrics["quantification"]["protein_groups"], "total")
         @assert missing_abundance_metrics["quantification"]["protein_groups"]["complete_rows"] == 1
         @assert missing_abundance_metrics["quantification"]["protein_groups"]["data_completeness"] == 0.5
+
+        logging_dir = joinpath(root, "logging")
+        write_test_tables(logging_dir)
+        logs = capture_stderr() do
+            compute_dataset_metrics(
+                logging_dir,
+                "LoggingDataset";
+                metric_groups = ["identification"],
+            )
+        end
+
+        @assert occursin("Starting dataset metrics", logs)
+        @assert occursin("Reading metrics table", logs)
+        @assert occursin("Finished dataset metrics", logs)
     end
 end
 

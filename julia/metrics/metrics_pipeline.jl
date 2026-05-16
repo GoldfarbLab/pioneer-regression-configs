@@ -206,7 +206,9 @@ function compute_dataset_metrics(
     dataset_paths::Dict{String, String} = Dict{String, String}(),
     search_paths::Dict{String, String} = Dict{String, String}(),
 )
+    dataset_start = time()
     requested_groups = Set(replace.(lowercase.(metric_groups), "-" => "_"))
+    @info "Starting dataset metrics" dataset=dataset_name search=search_name dataset_dir=dataset_dir metric_groups=metric_groups requested_groups=sort(collect(requested_groups))
     need_identification = "identification" in requested_groups
     need_quantification = ("quantification" in requested_groups) || need_identification
     need_cv = "cv" in requested_groups
@@ -250,23 +252,45 @@ function compute_dataset_metrics(
         missing_files = filter(f -> !isfile(joinpath(dataset_dir, f)), required_files)
         if !isempty(missing_files)
             @warn "Skipping dataset $dataset_name: missing required outputs" missing_files=missing_files
+            @info "Finished dataset metrics" dataset=dataset_name search=search_name dataset_dir=dataset_dir status="missing_required_outputs" missing_files=missing_files elapsed_seconds=elapsed_seconds(dataset_start)
             return nothing
         end
+        @info "Found required metrics outputs" dataset=dataset_name search=search_name dataset_dir=dataset_dir required_files=required_files
 
         precursors_long = nothing
         precursors_wide = nothing
         protein_groups_long = nothing
 
         if need_identification || need_cv || need_keap1 || need_ftr
-            precursors_long = read_required_table(joinpath(dataset_dir, "precursors_long.arrow"))
-            precursors_wide = read_required_table(joinpath(dataset_dir, "precursors_wide.arrow"))
+            precursors_long = read_required_table(
+                joinpath(dataset_dir, "precursors_long.arrow");
+                table_label = "precursors_long",
+                dataset_name = dataset_name,
+                search_name = search_name,
+            )
+            precursors_wide = read_required_table(
+                joinpath(dataset_dir, "precursors_wide.arrow");
+                table_label = "precursors_wide",
+                dataset_name = dataset_name,
+                search_name = search_name,
+            )
         end
 
         if need_identification || need_quantification
-            protein_groups_long = read_required_table(joinpath(dataset_dir, "protein_groups_long.arrow"))
+            protein_groups_long = read_required_table(
+                joinpath(dataset_dir, "protein_groups_long.arrow");
+                table_label = "protein_groups_long",
+                dataset_name = dataset_name,
+                search_name = search_name,
+            )
         end
 
-        protein_groups_wide = read_required_table(joinpath(dataset_dir, "protein_groups_wide.arrow"))
+        protein_groups_wide = read_required_table(
+            joinpath(dataset_dir, "protein_groups_wide.arrow");
+            table_label = "protein_groups_wide",
+            dataset_name = dataset_name,
+            search_name = search_name,
+        )
 
         quant_col_names = if precursors_wide !== nothing
             quant_column_names_from_proteins(precursors_wide)
@@ -454,5 +478,6 @@ function compute_dataset_metrics(
         metrics["runtime"] = runtime_minutes
     end
 
+    @info "Finished dataset metrics" dataset=dataset_name search=search_name dataset_dir=dataset_dir status="completed" metrics_keys=sort(collect(keys(metrics))) elapsed_seconds=elapsed_seconds(dataset_start)
     return metrics
 end

@@ -6,6 +6,8 @@ using JSON
 using Pkg
 using TOML
 
+elapsed_seconds(start_time::Real) = round(time() - start_time; digits = 2)
+
 function load_dataset_config(dataset_dir::AbstractString)
     config_path = joinpath(dataset_dir, "config.json")
     if !isfile(config_path)
@@ -120,22 +122,31 @@ function load_entrapment_module(repo_path::AbstractString)
         return nothing
     end
 
+    load_start = time()
+    @info "Loading entrapment analyses module" repo_path=repo_path
     original_project = Base.active_project()
     original_load_path = copy(Base.LOAD_PATH)
     temp_env = mktempdir()
 
     module_name = "EntrapmentAnalyses"
     try
+        @info "Activating temporary entrapment environment" repo_path=repo_path temp_env=temp_env
         Pkg.activate(temp_env; io=devnull)
+        @info "Developing entrapment analyses repository" repo_path=repo_path temp_env=temp_env
         Pkg.develop(; path=repo_path, io=devnull)
+        @info "Instantiating entrapment analyses environment" repo_path=repo_path temp_env=temp_env
         Pkg.instantiate(; io=devnull)
         pushfirst!(Base.LOAD_PATH, temp_env)
         module_name = entrapment_module_name(repo_path)
-        return Base.require(Main, Symbol(module_name))
+        @info "Requiring entrapment analyses module" repo_path=repo_path module_name=module_name
+        loaded_module = Base.require(Main, Symbol(module_name))
+        @info "Loaded entrapment analyses module" repo_path=repo_path module_name=module_name elapsed_seconds=elapsed_seconds(load_start)
+        return loaded_module
     catch err
-        @warn "Unable to load entrapment module" repo_path=repo_path module_name=module_name error=err
+        @warn "Unable to load entrapment module" repo_path=repo_path module_name=module_name elapsed_seconds=elapsed_seconds(load_start) error=err
         return nothing
     finally
+        @info "Restoring Julia project after entrapment module load" repo_path=repo_path original_project=original_project
         empty!(Base.LOAD_PATH)
         append!(Base.LOAD_PATH, original_load_path)
         if original_project === nothing
@@ -147,6 +158,8 @@ function load_entrapment_module(repo_path::AbstractString)
 end
 
 function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::AbstractString)
+    entrapment_start = time()
+    @info "Starting entrapment metrics" dataset=dataset_name dataset_dir=dataset_dir
     config_path = joinpath(dataset_dir, "config.json")
     config = load_dataset_config(dataset_dir)
     config === nothing && return nothing
@@ -191,6 +204,8 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
     efdr_fn = getproperty(entrapment_module, :run_efdr_analysis)
     protein_fn = getproperty(entrapment_module, :run_protein_efdr_analysis)
 
+    precursor_start = time()
+    @info "Running precursor entrapment analysis" dataset=dataset_name precursor_results_path=precursor_results_path library_path=lib_path output_dir=output_dir score_qval_pairs=precursor_pairs
     precursor_result = try
         Base.invokelatest(
             efdr_fn,
@@ -204,10 +219,12 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
             plot_bin_size = 0.00001,
         )
     catch err
-        @warn "Precursor entrapment analysis run failed" error=err
+        @warn "Precursor entrapment analysis run failed" dataset=dataset_name elapsed_seconds=elapsed_seconds(precursor_start) error=err
         nothing
     end
 
+    protein_start = time()
+    @info "Running protein entrapment analysis" dataset=dataset_name protein_results_path=protein_results_path output_dir=output_dir score_qval_pairs=protein_pairs
     protein_result = try
         Base.invokelatest(
             protein_fn,
@@ -217,16 +234,16 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
             plot_formats = [:png],
         )
     catch err
-        @warn "Protein entrapment analysis run failed" error=err
+        @warn "Protein entrapment analysis run failed" dataset=dataset_name elapsed_seconds=elapsed_seconds(protein_start) error=err
         nothing
     end
 
     if precursor_result !== nothing
-        @info "Precursor entrapment analysis completed"
+        @info "Precursor entrapment analysis completed" dataset=dataset_name elapsed_seconds=elapsed_seconds(precursor_start)
     end
 
     if protein_result !== nothing
-        @info "Protein entrapment analysis completed"
+        @info "Protein entrapment analysis completed" dataset=dataset_name elapsed_seconds=elapsed_seconds(protein_start)
     end
 
     function summary_from_arrow(path::AbstractString, qval_col::Symbol, efdr_col::Symbol)
@@ -235,8 +252,11 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
             return nothing
         end
 
+        summary_start = time()
+        @info "Reading entrapment summary table" dataset=dataset_name path=path qval_col=qval_col efdr_col=efdr_col
         table = Arrow.Table(path; convert=false)
         df = DataFrame(table)
+        @info "Loaded entrapment summary table" dataset=dataset_name path=path rows=nrow(df) columns=ncol(df) elapsed_seconds=elapsed_seconds(summary_start)
         cols = Symbol.(names(df))
         if !(qval_col in cols) || !(efdr_col in cols)
             @warn "Missing entrapment summary columns" path=path qval_col=qval_col efdr_col=efdr_col available_columns=join(string.(cols), ", ")
@@ -340,6 +360,7 @@ function compute_entrapment_metrics(dataset_dir::AbstractString, dataset_name::A
         metrics["summaries"] = summaries
     end
 
+    @info "Finished entrapment metrics" dataset=dataset_name summary_keys=sort(collect(keys(summaries))) elapsed_seconds=elapsed_seconds(entrapment_start)
     metrics
 end
 

@@ -17,6 +17,8 @@ using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_
 # Default metric buckets used when no per-search overrides are configured.
 const DEFAULT_METRIC_GROUPS = ["identification", "CV", "eFDR", "runtime"]
 
+elapsed_seconds(start_time::Real) = round(time() - start_time; digits = 2)
+
 function parse_bool_env(name::AbstractString; default::Bool = false)
     value = get(ENV, name, "")
     if isempty(value)
@@ -35,9 +37,19 @@ function parse_bool_env(name::AbstractString; default::Bool = false)
 end
 
 # Load an Arrow table that must exist for metrics computation.
-function read_required_table(path::AbstractString)
+function read_required_table(
+    path::AbstractString;
+    table_label::AbstractString = basename(path),
+    dataset_name::AbstractString = "",
+    search_name::AbstractString = "",
+)
     isfile(path) || error("Required file not found: $path")
-    DataFrame(Arrow.Table(path))
+    read_start = time()
+    file_size_bytes = filesize(path)
+    @info "Reading metrics table" path=path table_label=table_label dataset=dataset_name search=search_name file_size_bytes=file_size_bytes
+    df = DataFrame(Arrow.Table(path))
+    @info "Loaded metrics table" path=path table_label=table_label dataset=dataset_name search=search_name rows=nrow(df) columns=ncol(df) elapsed_seconds=elapsed_seconds(read_start)
+    df
 end
 
 # Parse the "Total Runtime" line from a Pioneer report, if present.
@@ -313,6 +325,7 @@ end
 
 function safe_rm(path::AbstractString; force::Bool = false, recursive::Bool = false)
     try
+        @info "Removing regression result path" path=path force=force recursive=recursive
         rm(path; force = force, recursive = recursive)
     catch err
         @warn "Failed to remove path" path=path error=err
@@ -321,6 +334,7 @@ end
 
 function safe_mv(src::AbstractString, dst::AbstractString; force::Bool = false)
     try
+        @info "Moving regression result path" src=src dst=dst force=force
         mv(src, dst; force = force)
     catch err
         @warn "Failed to move path" src=src dst=dst error=err
@@ -333,27 +347,38 @@ function cleanup_results_dir(results_dir::AbstractString, metrics_path::Abstract
         return
     end
 
+    cleanup_start = time()
+    @info "Cleaning regression results directory" results_dir=results_dir metrics_path=metrics_path
     metrics_path_abs = abspath(metrics_path)
+    removed_entries = 0
+    kept_entries = 0
 
     for entry in readdir(results_dir; join = true)
         entry_abs = abspath(entry)
         if entry_abs == metrics_path_abs
+            kept_entries += 1
             continue
         end
 
         if isfile(entry)
             if is_log_file(entry)
+                kept_entries += 1
                 continue
             end
         elseif isdir(entry) && basename(entry) == "entrapment_analysis"
             cleanup_entrapment_dir(entry)
+            kept_entries += 1
             continue
         elseif isdir(entry) && basename(entry) == "qc_plots"
+            kept_entries += 1
             continue
         end
 
         safe_rm(entry; force = true, recursive = true)
+        removed_entries += 1
     end
+
+    @info "Finished cleaning regression results directory" results_dir=results_dir removed_entries=removed_entries kept_entries=kept_entries elapsed_seconds=elapsed_seconds(cleanup_start)
 end
 
 function archive_results(
@@ -369,6 +394,7 @@ function archive_results(
         return
     end
 
+    archive_start = time()
     dataset_target_dir = joinpath(archive_root, "results", dataset_name)
     search_target_dir = joinpath(dataset_target_dir, search_name)
     @info "Resolved archive destination for results" results_dir=results_dir dataset_name=dataset_name search_name=search_name target_dir=search_target_dir
@@ -382,7 +408,7 @@ function archive_results(
                 safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
             end
         end
-        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
+        @info "Archived regression outputs (preserved original results)" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir elapsed_seconds=elapsed_seconds(archive_start)
         return
     end
 
@@ -414,7 +440,7 @@ function archive_results(
 
     safe_rm(results_dir; force = true, recursive = true)
 
-    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir
+    @info "Archived regression outputs" results_dir=results_dir metrics_path=metrics_path target_dir=search_target_dir elapsed_seconds=elapsed_seconds(archive_start)
 end
 
 function compute_metrics_for_params_dir(
@@ -425,10 +451,13 @@ function compute_metrics_for_params_dir(
     archive_root::AbstractString = "",
     preserve_results::Bool = false,
 )
+    run_start = time()
     isdir(params_dir) || error("Params directory does not exist: $params_dir")
+    @info "Starting metrics params directory run" params_dir=params_dir metrics_config_path=metrics_config_path experimental_design_path=experimental_design_path three_proteome_designs_path=three_proteome_designs_path archive_root=archive_root preserve_results=preserve_results
 
     param_files = search_param_files(params_dir)
     isempty(param_files) && error("No search*.json files found in params directory $params_dir")
+    @info "Discovered search parameter files for metrics" params_dir=params_dir count=length(param_files) param_files=param_files
 
     metrics_config = load_metrics_config(metrics_config_path)
     experimental_design = isempty(experimental_design_path) ? Dict{String, Any}() : load_experimental_design(experimental_design_path)
@@ -446,14 +475,18 @@ function compute_metrics_for_params_dir(
         push!(dataset_entries, (; search_name, results_dir, dataset_name))
         haskey(dataset_paths, dataset_name) || (dataset_paths[dataset_name] = results_dir)
         search_paths[search_name] = results_dir
+        @info "Resolved metrics search input" param_file=param_file dataset=dataset_name search=search_name results_dir=results_dir
     end
 
     isempty(dataset_entries) && error("No valid parameter files remain after parsing results paths")
+    @info "Prepared metrics search inputs" dataset_count=length(unique(entry.dataset_name for entry in dataset_entries)) search_count=length(dataset_entries) searches=[entry.search_name for entry in dataset_entries]
 
     three_proteome_designs = nothing
 
     for entry in dataset_entries
+        search_start = time()
         metric_groups = metric_groups_for_search(metrics_config, entry.search_name)
+        @info "Starting metrics search" dataset=entry.dataset_name search=entry.search_name results_dir=entry.results_dir metric_groups=metric_groups
         normalized_groups = Set(replace.(lowercase.(metric_groups), "-" => "_"))
         need_three_proteome =
             ("fold_change" in normalized_groups) ||
@@ -463,16 +496,21 @@ function compute_metrics_for_params_dir(
             three_proteome_designs = load_three_proteome_designs(three_proteome_designs_path)
         end
 
-        metrics = compute_dataset_metrics(
-            entry.results_dir,
-            entry.dataset_name;
-            metric_groups = metric_groups,
-            search_name = entry.search_name,
-            experimental_design = experimental_design,
-            three_proteome_designs = three_proteome_designs,
-            dataset_paths = dataset_paths,
-            search_paths = search_paths,
-        )
+        metrics = try
+            compute_dataset_metrics(
+                entry.results_dir,
+                entry.dataset_name;
+                metric_groups = metric_groups,
+                search_name = entry.search_name,
+                experimental_design = experimental_design,
+                three_proteome_designs = three_proteome_designs,
+                dataset_paths = dataset_paths,
+                search_paths = search_paths,
+            )
+        catch err
+            @error "Metrics search failed" dataset=entry.dataset_name search=entry.search_name results_dir=entry.results_dir error=err exception=(err, catch_backtrace())
+            rethrow()
+        end
 
         output_path = output_metrics_path(entry.results_dir, entry.dataset_name, entry.search_name)
 
@@ -487,6 +525,7 @@ function compute_metrics_for_params_dir(
                 search_name = entry.search_name,
                 preserve_results = preserve_results,
             )
+            @info "Finished metrics search" dataset=entry.dataset_name search=entry.search_name results_dir=entry.results_dir status="no_metrics" elapsed_seconds=elapsed_seconds(search_start)
             continue
         end
 
@@ -501,12 +540,16 @@ function compute_metrics_for_params_dir(
                 search_name = entry.search_name,
                 preserve_results = preserve_results,
             )
+            @info "Finished metrics search" dataset=entry.dataset_name search=entry.search_name results_dir=entry.results_dir status="empty_metrics" elapsed_seconds=elapsed_seconds(search_start)
             continue
         end
 
+        write_start = time()
+        @info "Writing metrics output" dataset=entry.dataset_name search=entry.search_name output_path=output_path metrics_keys=sort(collect(keys(metrics)))
         open(output_path, "w") do io
             JSON.print(io, metrics)
         end
+        @info "Wrote metrics output" dataset=entry.dataset_name search=entry.search_name output_path=output_path file_size_bytes=filesize(output_path) elapsed_seconds=elapsed_seconds(write_start)
 
         preserve_results || cleanup_results_dir(entry.results_dir, output_path)
         archive_results(
@@ -517,16 +560,21 @@ function compute_metrics_for_params_dir(
             search_name = entry.search_name,
             preserve_results = preserve_results,
         )
+        @info "Finished metrics search" dataset=entry.dataset_name search=entry.search_name results_dir=entry.results_dir status="completed" output_path=output_path elapsed_seconds=elapsed_seconds(search_start)
     end
+
+    @info "Finished metrics params directory run" params_dir=params_dir search_count=length(dataset_entries) elapsed_seconds=elapsed_seconds(run_start)
 end
 
 function main()
+    job_start = time()
     run_dir = get(ENV, "RUN_DIR", "")
     dataset_name = get(ENV, "PIONEER_DATASET_NAME", "")
     delete_results = parse_bool_env("PIONEER_DELETE_RESULTS")
     preserve_results = !delete_results
     isempty(run_dir) && error("RUN_DIR must be set for regression metrics")
     archive_root = run_dir
+    @info "Starting regression metrics job" run_dir=run_dir dataset=dataset_name delete_results=delete_results preserve_results=preserve_results julia_num_threads=get(ENV, "JULIA_NUM_THREADS", "") julia_depot_path=get(ENV, "JULIA_DEPOT_PATH", "")
 
     if !isempty(dataset_name)
         params_dir = joinpath(run_dir, "adjusted-params", dataset_name)
@@ -534,6 +582,7 @@ function main()
         metrics_config_path = joinpath(config_dir, "metrics.json")
         experimental_design_path = config_dir
         three_proteome_designs_path = experimental_design_path
+        @info "Using dataset-scoped metrics inputs" dataset=dataset_name params_dir=params_dir config_dir=config_dir metrics_config_path=metrics_config_path
         compute_metrics_for_params_dir(
             params_dir;
             metrics_config_path = metrics_config_path,
@@ -542,6 +591,7 @@ function main()
             archive_root = archive_root,
             preserve_results = preserve_results,
         )
+        @info "Finished regression metrics job" run_dir=run_dir dataset=dataset_name elapsed_seconds=elapsed_seconds(job_start)
         return
     end
 
@@ -606,10 +656,14 @@ function main()
         metrics === nothing && continue
 
         output_path = joinpath(dataset_dir, "metrics_$(dataset_name).json")
+        write_start = time()
+        @info "Writing metrics output" dataset=dataset_name output_path=output_path metrics_keys=sort(collect(keys(metrics)))
         open(output_path, "w") do io
             JSON.print(io, metrics)
         end
+        @info "Wrote metrics output" dataset=dataset_name output_path=output_path file_size_bytes=filesize(output_path) elapsed_seconds=elapsed_seconds(write_start)
     end
+    @info "Finished regression metrics job" run_dir=run_dir dataset=dataset_name elapsed_seconds=elapsed_seconds(job_start)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
