@@ -60,15 +60,10 @@ function precursor_score_pairs(path::AbstractString; match_between_runs::Bool=tr
     cols = arrow_column_names(path)
     cols === nothing && return nothing
 
-    required_pairs = match_between_runs ?
-        [
-            (:MBR_boosted_global_prob, :MBR_boosted_global_qval),
-            (:MBR_boosted_prec_prob, :MBR_boosted_qval),
-        ] :
-        [
-            (:global_prob, :global_qval),
-            (:prec_prob, :qval),
-        ]
+    required_pairs = [
+        (:global_prob, :global_qval),
+        (:prec_prob, :qval),
+    ]
 
     available_pairs = [pair for pair in required_pairs if all(col -> col in cols, pair)]
     if isempty(available_pairs)
