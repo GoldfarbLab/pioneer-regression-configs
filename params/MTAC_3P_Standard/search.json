@@ -17,22 +17,8 @@
     "isotope_settings": {
       "combine_traces": true
     },
-    "scoring": {
-      "q_value_threshold": 0.01
-    },
-    "match_between_runs": true,
-    "ms1_quant": false
-  },
-  "first_search": {
-    "fragment_settings": {
-      "min_score": 15
-    }
-  },
-  "acquisition": {
-    "nce": 26,
-    "quad_transmission": {
-      "fit_from_data": true
-    }
+    "q_value_threshold": 0.01,
+    "match_between_runs": true
   },
   "maxLFQ": {
     "run_to_run_normalization": false

@@ -21,17 +21,6 @@
         "match_between_runs": true,
         "ms1_quant": false
     },
-    "first_search": {
-        "fragment_settings": {
-            "min_score": 15
-        }
-    },
-    "acquisition": {
-        "nce": 26,
-        "quad_transmission": {
-            "fit_from_data": true
-        }
-    },
     "maxLFQ": {
         "run_to_run_normalization": false
     }
