@@ -272,11 +272,16 @@ function print_table_controls(
     )
 end
 
+function is_efdr_plot_file(path::AbstractString)
+    filename = lowercase(basename(path))
+    endswith(filename, ".png") && occursin("efdr", filename)
+end
+
 function fdr_plot_paths(metrics_dir::AbstractString)
     plots = String[]
     if isdir(metrics_dir)
         for entry in readdir(metrics_dir; join = true)
-            if isfile(entry) && endswith(lowercase(entry), ".png")
+            if isfile(entry) && is_efdr_plot_file(entry)
                 push!(plots, entry)
             end
         end
@@ -285,7 +290,7 @@ function fdr_plot_paths(metrics_dir::AbstractString)
     entrapment_dir = joinpath(metrics_dir, "entrapment_analysis")
     if isdir(entrapment_dir)
         for entry in readdir(entrapment_dir; join = true)
-            if isfile(entry) && endswith(lowercase(entry), ".png")
+            if isfile(entry) && is_efdr_plot_file(entry)
                 push!(plots, entry)
             end
         end
@@ -296,7 +301,7 @@ function fdr_plot_paths(metrics_dir::AbstractString)
     plots
 end
 
-function collect_png_paths(root::AbstractString)
+function collect_efdr_png_paths(root::AbstractString)
     plots = String[]
     if !isdir(root)
         return plots
@@ -307,7 +312,7 @@ function collect_png_paths(root::AbstractString)
     end
     for (dir, _, filenames) in walkdir(root; onerror = onerror)
         for filename in filenames
-            if endswith(lowercase(filename), ".png")
+            if is_efdr_plot_file(filename)
                 push!(plots, joinpath(dir, filename))
             end
         end
@@ -324,7 +329,7 @@ function collect_fdr_plots(root::AbstractString)
         isdir(entry) || continue
         basename(entry) == "fdr_plots" && continue
         dataset = basename(entry)
-        plots = collect_png_paths(entry)
+        plots = collect_efdr_png_paths(entry)
         isempty(plots) && continue
         search_entry[dataset] = plots
     end
