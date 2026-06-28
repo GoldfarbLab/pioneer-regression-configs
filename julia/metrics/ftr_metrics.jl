@@ -118,6 +118,92 @@ function protein_ftr_metrics_for_long_table(
     )
 end
 
+function paired_ftr_metrics_for_table(
+    mbr_df::DataFrame,
+    no_mbr_df::DataFrame,
+    mbr_quant_cols::AbstractVector{<:Union{Symbol, String}},
+    no_mbr_quant_cols::AbstractVector{<:Union{Symbol, String}},
+    human_only_runs::AbstractVector{<:AbstractString};
+    table_label::AbstractString,
+)
+    yeast_human_only_mbr = count_yeast_ids(
+        mbr_df,
+        mbr_quant_cols,
+        human_only_runs;
+        table_label = table_label,
+    )
+    yeast_human_only_no_mbr = count_yeast_ids(
+        no_mbr_df,
+        no_mbr_quant_cols,
+        human_only_runs;
+        table_label = table_label,
+    )
+
+    total_ids_human_only_mbr = count_total_ids(
+        mbr_df,
+        mbr_quant_cols,
+        human_only_runs;
+        table_label = table_label,
+    )
+    total_ids_human_only_no_mbr = count_total_ids(
+        no_mbr_df,
+        no_mbr_quant_cols,
+        human_only_runs;
+        table_label = table_label,
+    )
+
+    additional_yeast_IDs = yeast_human_only_mbr - yeast_human_only_no_mbr
+    additional_IDs = total_ids_human_only_mbr - total_ids_human_only_no_mbr
+    ftr = additional_yeast_IDs < 0 || additional_IDs < 0 ? 0.0 :
+        additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
+
+    return Dict(
+        "additional_yeast_IDs" => additional_yeast_IDs,
+        "additional_IDs" => additional_IDs,
+        "false_transfer_rate" => ftr,
+    )
+end
+
+function paired_protein_ftr_metrics_for_long_table(
+    mbr_df::DataFrame,
+    no_mbr_df::DataFrame,
+    human_only_runs::AbstractVector{<:AbstractString};
+    table_label::AbstractString,
+)
+    yeast_human_only_mbr = count_long_table_yeast_ids(
+        mbr_df,
+        human_only_runs;
+        table_label = table_label,
+    )
+    yeast_human_only_no_mbr = count_long_table_yeast_ids(
+        no_mbr_df,
+        human_only_runs;
+        table_label = table_label,
+    )
+
+    total_ids_human_only_mbr = count_long_table_ids(
+        mbr_df,
+        human_only_runs;
+        table_label = table_label,
+    )
+    total_ids_human_only_no_mbr = count_long_table_ids(
+        no_mbr_df,
+        human_only_runs;
+        table_label = table_label,
+    )
+
+    additional_yeast_IDs = yeast_human_only_mbr - yeast_human_only_no_mbr
+    additional_IDs = total_ids_human_only_mbr - total_ids_human_only_no_mbr
+    ftr = additional_yeast_IDs < 0 || additional_IDs < 0 ? 0.0 :
+        additional_IDs > 0 ? additional_yeast_IDs / additional_IDs : 0.0
+
+    return Dict(
+        "additional_yeast_IDs" => additional_yeast_IDs,
+        "additional_IDs" => additional_IDs,
+        "false_transfer_rate" => ftr,
+    )
+end
+
 function false_transfer_rate_config(entry)
     if entry isa AbstractDict
         ftr_config = get(entry, "false_transfer_rate", nothing)
@@ -200,6 +286,7 @@ function compute_ftr_metrics(
     combined_search = config_string(ftr_config, "combined_search")
     human_only_search = config_string(ftr_config, "human_only_search")
     human_yeast_search = config_string(ftr_config, "human_yeast_search")
+    no_mbr_search = config_string(ftr_config, "no_mbr_search")
 
     if combined_search === nothing || human_only_search === nothing || human_yeast_search === nothing
         @warn "FTR metrics require configured combined and split search names" dataset=dataset_name search=search_name config=ftr_config
@@ -335,8 +422,52 @@ function compute_ftr_metrics(
         table_label = "protein_groups_long",
     )
 
-    return Dict(
+    metrics = Dict{String, Any}(
         "precursors" => precursor_metrics,
         "protein_groups" => protein_metrics,
     )
+
+    if no_mbr_search !== nothing
+        @info "Starting MBR-vs-noMBR full-search FTR metrics" dataset=dataset_name search=search_name combined_search=combined_search no_mbr_search=no_mbr_search
+        precursors_no_mbr = table_for_search(
+            no_mbr_search,
+            search_name,
+            precursors_wide,
+            search_paths,
+            "precursors_wide.arrow";
+            table_label = "mbr_vs_no_mbr_precursors",
+        )
+        protein_groups_long_no_mbr = table_for_search(
+            no_mbr_search,
+            search_name,
+            protein_groups_long,
+            search_paths,
+            "protein_groups_long.arrow";
+            table_label = "mbr_vs_no_mbr_protein_groups_long",
+        )
+
+        if precursors_no_mbr !== nothing && protein_groups_long_no_mbr !== nothing
+            no_mbr_quant_cols = quant_column_names_from_proteins(precursors_no_mbr)
+            metrics["mbr_vs_no_mbr"] = Dict{String, Any}(
+                "precursors" => paired_ftr_metrics_for_table(
+                    precursors_combined,
+                    precursors_no_mbr,
+                    combined_quant_cols,
+                    no_mbr_quant_cols,
+                    human_only_runs;
+                    table_label = "mbr_vs_no_mbr_precursors",
+                ),
+                "protein_groups" => paired_protein_ftr_metrics_for_long_table(
+                    protein_groups_long_combined,
+                    protein_groups_long_no_mbr,
+                    human_only_runs;
+                    table_label = "mbr_vs_no_mbr_protein_groups_long",
+                ),
+            )
+        else
+            @warn "Skipping MBR-vs-noMBR full-search FTR metrics; missing no-MBR comparison tables" dataset=dataset_name search=search_name no_mbr_search=no_mbr_search
+        end
+    end
+
+    return metrics
 end
