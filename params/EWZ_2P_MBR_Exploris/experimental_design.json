@@ -45,6 +45,7 @@
   "false_transfer_rate": {
     "human_only_condition": "human_only",
     "combined_search": "search_combined",
+    "no_mbr_search": "search_noMBR",
     "human_only_search": "search_human_only",
     "human_yeast_search": "search_human_yeast"
   }

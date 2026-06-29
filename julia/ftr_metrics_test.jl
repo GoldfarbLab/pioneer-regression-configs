@@ -38,6 +38,13 @@ function run_ftr_metrics_tests()
             global_qval = [0.03],
             run2 = Union{Missing, Float64}[1.0],
         )
+        precursor_no_mbr = DataFrame(
+            precursor = ["p4"],
+            species = ["HUMAN"],
+            global_qval = [0.04],
+            run1 = Union{Missing, Float64}[missing],
+            run2 = Union{Missing, Float64}[1.0],
+        )
 
         protein_long_combined = DataFrame(
             file_name = ["run1", "run1", "run2", "run2"],
@@ -55,6 +62,12 @@ function run_ftr_metrics_tests()
             file_name = ["run2", "run2"],
             species = ["HUMAN", "YEAST"],
             protein = ["pg_h_hy", "pg_y_hy"],
+            abundance = Union{Missing, Float64}[missing, missing],
+        )
+        protein_long_no_mbr = DataFrame(
+            file_name = ["run1", "run2"],
+            species = ["HUMAN", "YEAST"],
+            protein = ["pg_h_honly", "pg_y_hy"],
             abundance = Union{Missing, Float64}[missing, missing],
         )
 
@@ -79,14 +92,23 @@ function run_ftr_metrics_tests()
             global_qval = [0.03, 0.04],
             run2 = Union{Missing, Float64}[missing, missing],
         )
+        protein_wide_no_mbr = DataFrame(
+            protein = ["pg_h_honly", "pg_y_hy"],
+            species = ["HUMAN", "YEAST"],
+            global_qval = [0.02, 0.04],
+            run1 = Union{Missing, Float64}[missing, missing],
+            run2 = Union{Missing, Float64}[missing, missing],
+        )
 
         combined_dir = joinpath(root, "combined")
         human_only_dir = joinpath(root, "human_only")
         human_yeast_dir = joinpath(root, "human_yeast")
+        no_mbr_dir = joinpath(root, "no_mbr")
 
         write_ftr_tables(combined_dir, precursor_combined, protein_long_combined, protein_wide_combined)
         write_ftr_tables(human_only_dir, precursor_human_only, protein_long_human_only, protein_wide_human_only)
         write_ftr_tables(human_yeast_dir, precursor_human_yeast, protein_long_human_yeast, protein_wide_human_yeast)
+        write_ftr_tables(no_mbr_dir, precursor_no_mbr, protein_long_no_mbr, protein_wide_no_mbr)
 
         experimental_design = Dict{String, Any}(
             "FTRDataset" => Dict{String, Any}(
@@ -98,6 +120,7 @@ function run_ftr_metrics_tests()
                     "combined_search" => "search_combined",
                     "human_only_search" => "search_human_only",
                     "human_yeast_search" => "search_human_yeast",
+                    "no_mbr_search" => "search_noMBR",
                 ),
             ),
         )
@@ -113,6 +136,7 @@ function run_ftr_metrics_tests()
                 "search_combined" => combined_dir,
                 "search_human_only" => human_only_dir,
                 "search_human_yeast" => human_yeast_dir,
+                "search_noMBR" => no_mbr_dir,
             ),
         )
 
@@ -124,6 +148,14 @@ function run_ftr_metrics_tests()
         @assert metrics["precursors"]["additional_yeast_IDs"] == 1
         @assert metrics["precursors"]["additional_IDs"] == 0
         @assert metrics["precursors"]["false_transfer_rate"] == 0.0
+
+        @assert metrics["mbr_vs_no_mbr"]["protein_groups"]["additional_yeast_IDs"] == 1
+        @assert metrics["mbr_vs_no_mbr"]["protein_groups"]["additional_IDs"] == 1
+        @assert metrics["mbr_vs_no_mbr"]["protein_groups"]["false_transfer_rate"] == 1.0
+
+        @assert metrics["mbr_vs_no_mbr"]["precursors"]["additional_yeast_IDs"] == 1
+        @assert metrics["mbr_vs_no_mbr"]["precursors"]["additional_IDs"] == 1
+        @assert metrics["mbr_vs_no_mbr"]["precursors"]["false_transfer_rate"] == 1.0
     end
 end
 

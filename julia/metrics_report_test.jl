@@ -17,6 +17,8 @@ function run_metrics_report_tests()
                 "search" => Dict{String, Any}(
                     "ExampleDataset" => Dict{String, Any}(
                         "identification.precursors.total" => 10.0,
+                        "ftr.precursors.false_transfer_rate" => 0.1,
+                        "ftr.mbr_vs_no_mbr.precursors.false_transfer_rate" => 0.2,
                         "cv.protein_groups.median_cv" => 0.25,
                         "fold_change.error.precursors.a_over_b.human_median_deviation" => 1.2,
                         "fold_change.variance.precursors.a_over_b.human_fc_variance" => 0.3,
@@ -28,6 +30,8 @@ function run_metrics_report_tests()
                 "search" => Dict{String, Any}(
                     "ExampleDataset" => Dict{String, Any}(
                         "identification.precursors.total" => 12.0,
+                        "ftr.precursors.false_transfer_rate" => 0.05,
+                        "ftr.mbr_vs_no_mbr.precursors.false_transfer_rate" => 0.15,
                         "cv.protein_groups.median_cv" => 0.20,
                         "fold_change.error.precursors.a_over_b.human_median_deviation" => 0.8,
                         "fold_change.variance.precursors.a_over_b.human_fc_variance" => 0.2,
@@ -40,12 +44,16 @@ function run_metrics_report_tests()
     )
 
     identification_index = report_index(report, "<h3>Metric: identification.precursors.total</h3>")
+    ftr_current_index = report_index(report, "<h3>Metric: ftr.precursors.false_transfer_rate</h3>")
+    ftr_mbr_vs_no_mbr_index = report_index(report, "<h3>Metric: ftr.mbr_vs_no_mbr.precursors.false_transfer_rate</h3>")
     cv_index = report_index(report, "<h3>Metric: cv.protein_groups.median_cv</h3>")
     fold_change_index = report_index(report, "<h3>fold_change.error.precursors</h3>")
     fold_change_variance_index = report_index(report, "<h3>fold_change.variance.precursors</h3>")
     runtime_index = report_index(report, "<h3>Metric: runtime.runtime_minutes</h3>")
 
     @assert identification_index < cv_index
+    @assert identification_index < ftr_current_index < cv_index
+    @assert identification_index < ftr_mbr_vs_no_mbr_index < cv_index
     @assert cv_index < fold_change_index
     @assert fold_change_index < fold_change_variance_index
     @assert fold_change_variance_index < runtime_index
