@@ -4,6 +4,18 @@
       "order": 1,
       "tags": ["APMS_Astral"]
     },
+    "APMS_Astral_5": {
+      "order": 1,
+      "tags": ["APMS_Astral_5"]
+    },
+    "APMS_Astral_10": {
+      "order": 1,
+      "tags": ["APMS_Astral_10"]
+    },
+    "APMS_Astral_20": {
+      "order": 1,
+      "tags": ["APMS_Astral_20"]
+    },
     "EWZ_2P_MBR_Exploris": {
       "order": 6,
       "tags": [
