@@ -4,6 +4,14 @@
       "order": 1,
       "tags": ["APMS_Astral"]
     },
+    "APMS_Astral_1": {
+      "order": 1,
+      "tags": ["fastest", "fast", "APMS_Astral_1"]
+    },
+    "APMS_Astral_2": {
+      "order": 1,
+      "tags": ["fastest", "fast", "APMS_Astral_2"]
+    },
     "APMS_Astral_5": {
       "order": 1,
       "tags": ["fastest", "fast", "APMS_Astral_5"]
