@@ -7,7 +7,7 @@
 #SBATCH --mem=4G
 #SBATCH --time=1:00:00
 #SBATCH --container-image=dennisgoldfarb/julia-python:1.12.6
-#SBATCH --container-mounts=/storage1/fs1/d.goldfarb/Active:/storage1/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
+#SBATCH --container-mounts=/storage3/fs1/d.goldfarb/Active:/storage3/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/
 #SBATCH --output=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
 #SBATCH --error=/scratch2/fs1/d.goldfarb/pioneer-regression/logs/cleanup.%j.out
 
@@ -16,7 +16,7 @@ set -euo pipefail
 : "${RUN_SUFFIX:?RUN_SUFFIX not set}"
 
 case "$RUN_DIR" in
-  /storage1/fs1/d.goldfarb/Active/Automation/Pioneer/runs/run-*) ;;
+  /storage3/fs1/d.goldfarb/Active/Automation/Pioneer/runs/run-*) ;;
   *) echo "Refusing to clean unexpected run dir: $RUN_DIR" >&2; exit 1 ;;
 esac
 
