@@ -11,7 +11,7 @@
     "plots_per_page": 12
   },
   "logging": {
-    "debug_console_level": 0
+    "debug_console_level": 1
   },
   "global": {
     "q_value_threshold": 0.01,
