@@ -1,4 +1,6 @@
 {
     "search": ["runtime", "identification"],
-    "search_entrap": ["eFDR"]
+    "search_entrap": ["eFDR"],
+    "search_iso": ["runtime", "identification"],
+    "search_iso_entrap": ["eFDR"]
 }
