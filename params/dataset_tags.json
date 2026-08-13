@@ -86,6 +86,14 @@
         "MTAC_Yeast_Standard_5min"
       ]
     },
+    "MTAC_Yeast_Standard_5min_SemiTryptic": {
+      "order": 100,
+      "tags": [
+        "fastest",
+        "fast",
+        "MTAC_Yeast_Standard_5min_SemiTryptic"
+      ]
+    },
     "Olsen_Astral_3P": {
       "order": 4,
       "tags": ["Olsen_Astral_3P"]
