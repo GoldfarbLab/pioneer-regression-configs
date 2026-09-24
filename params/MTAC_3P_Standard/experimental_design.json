@@ -4,12 +4,12 @@
     "B"
   ],
   "runs": {
-    "Sample-A_Rep1": "A",
-    "Sample-A_Rep2": "A",
-    "Sample-A_Rep3": "A",
-    "Sample-B_Rep1": "B",
-    "Sample-B_Rep2": "B",
-    "Sample-B_Rep3": "B"
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-A_Standard_5min_Rep1": "A",
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-A_Standard_5min_Rep2": "A",
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-A_Standard_5min_Rep3": "A",
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-B_Standard_5min_Rep1": "B",
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-B_Standard_5min_Rep2": "B",
+    "20241211_bkc_25-0856_Goldfarb_Wamsley_Sample-B_Standard_5min_Rep3": "B"
   },
   "expected_ratios": [
     {

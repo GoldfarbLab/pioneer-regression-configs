@@ -10,7 +10,7 @@ include(joinpath(@__DIR__, "metrics", "entrapment_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "three_proteome_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "ftr_metrics.jl"))
 include(joinpath(@__DIR__, "metrics", "metrics_pipeline.jl"))
-using .RegressionMetricsHelpers: condition_columns, count_nonyeast_ids, count_species_ids, count_total_ids, count_yeast_ids, file_name_column, gene_names_column, is_yeast_only_species, mean_for_columns, quant_column_names_from_proteins, select_quant_columns, species_column, unique_species_value
+using .RegressionMetricsHelpers: condition_columns, count_nonyeast_ids, count_species_ids, count_total_ids, count_yeast_ids, file_name_column, gene_names_column, is_yeast_only_species, mean_for_columns, quant_column_names_from_proteins, resolve_run_columns, select_quant_columns, species_column, unique_species_value
 using .EntrapmentMetrics: compute_entrapment_metrics
 using .ThreeProteomeMetrics: experimental_design_entry, experimental_design_for_dataset, fold_change_metrics_for_table, gene_counts_metrics_by_run, load_experimental_design, load_three_proteome_designs, normalize_metric_label, run_groups_for_dataset, three_proteome_design_entry
 
@@ -114,13 +114,18 @@ function compute_cv_metrics(
     groups::Dict{String, Vector{String}} = Dict{String, Vector{String}}(),
 )
     function cvs_for_columns(
-        columns::AbstractVector{<:Union{Symbol, String}},
+        requested_runs::AbstractVector{<:Union{Symbol, String}},
         label::AbstractString,
     )
+        columns = resolve_run_columns(df, quant_col_names, requested_runs)
+        run_names = String.(requested_runs)
+        missing_runs = setdiff(run_names, columns)
+        duplicate_runs = length(unique(run_names)) != length(run_names)
         column_syms = Symbol.(columns)
         runs = length(columns)
-        if runs == 0
-            return (; runs = 0, rows_evaluated = 0, cvs = Float64[])
+        if !isempty(missing_runs) || duplicate_runs || runs < 2
+            @warn "CV unavailable: every requested run must match exactly, with at least two distinct replicates" table_label=table_label group_label=label requested_runs=requested_runs missing_runs=missing_runs duplicate_runs=duplicate_runs matched_runs=runs
+            return (; columns, runs, rows_evaluated = 0, cvs = Float64[])
         end
 
         quant_data = df[:, column_syms]
@@ -130,40 +135,51 @@ function compute_cv_metrics(
         first_row_values = rows_evaluated == 0 ? NamedTuple() : NamedTuple(complete_data[1, :])
         @info "Computing CVs for group" table_label=table_label group_label=label quant_columns=column_syms rows_evaluated=rows_evaluated first_row_values=first_row_values
         if rows_evaluated == 0
-            return (; runs, rows_evaluated, cvs = Float64[])
+            @warn "CV unavailable: no complete rows across the requested runs" table_label=table_label group_label=label matched_runs=runs
+            return (; columns, runs, rows_evaluated, cvs = Float64[])
         end
 
         quant_complete = Matrix(complete_data)
         computed_cvs = Float64[]
         for row in eachrow(quant_complete)
+            all(isfinite, row) || continue
             mean_val = mean(row)
             if mean_val != 0
-                push!(computed_cvs, std(row) / mean_val)
+                cv = std(row) / mean_val
+                isfinite(cv) && push!(computed_cvs, cv)
             end
         end
 
-        (; runs, rows_evaluated, cvs = computed_cvs)
+        if isempty(computed_cvs)
+            @warn "CV unavailable: no finite CV observations with nonzero means" table_label=table_label group_label=label matched_runs=runs rows_evaluated=rows_evaluated
+        end
+        (; columns, runs, rows_evaluated, cvs = computed_cvs)
     end
 
     if isempty(groups)
-        existing_quant_cols = select_quant_columns(df, quant_col_names)
-        stats = cvs_for_columns(existing_quant_cols, "all_runs")
-        median_cv = isempty(stats.cvs) ? 0.0 : median(stats.cvs)
+        stats = cvs_for_columns(quant_col_names, "all_runs")
+        median_cv = isempty(stats.cvs) ? nothing : median(stats.cvs)
         return (; runs = stats.runs, rows_evaluated = stats.rows_evaluated, median_cv)
     end
 
     all_runs = Set{Symbol}()
     all_cvs = Float64[]
     total_rows = 0
+    unavailable_groups = String[]
     for (label, runs) in pairs(groups)
-        columns = select_quant_columns(df, runs)
-        union!(all_runs, Symbol.(columns))
-        stats = cvs_for_columns(columns, label)
+        stats = cvs_for_columns(runs, label)
+        union!(all_runs, Symbol.(stats.columns))
         total_rows += stats.rows_evaluated
         append!(all_cvs, stats.cvs)
+        isempty(stats.cvs) && push!(unavailable_groups, label)
     end
 
-    median_cv = isempty(all_cvs) ? 0.0 : median(all_cvs)
+    # A pooled CV from only part of the configured design is not comparable to
+    # previous runs. Preserve genuine zeros, but mark incomplete designs unavailable.
+    if !isempty(unavailable_groups)
+        @warn "CV unavailable: one or more configured groups could not be evaluated" table_label=table_label unavailable_groups=unavailable_groups
+    end
+    median_cv = isempty(unavailable_groups) ? median(all_cvs) : nothing
     (; runs = length(all_runs), rows_evaluated = total_rows, median_cv)
 end
 

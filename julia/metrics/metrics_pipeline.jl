@@ -444,6 +444,7 @@ function compute_dataset_metrics(
         precursor_cv_block = Dict{String, Any}()
         protein_cv_block = Dict{String, Any}()
 
+        # Keep unavailable CVs as JSON null (nothing), distinct from valid 0.0.
         precursor_cv_metrics !== nothing && (precursor_cv_block["median_cv"] = precursor_cv_metrics.median_cv)
         protein_cv_metrics !== nothing && (protein_cv_block["median_cv"] = protein_cv_metrics.median_cv)
 

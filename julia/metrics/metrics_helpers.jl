@@ -152,7 +152,9 @@ function resolve_run_columns(
         return String.(quant_columns)
     end
 
-    run_names = String.(requested_runs)
+    # Run identifiers are full filename stems. Never infer a match from a
+    # substring, and never count the same physical run as multiple replicates.
+    run_names = unique(String.(requested_runs))
     String[x for x in run_names if x in quant_strings]
 end
 

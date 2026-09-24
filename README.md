@@ -32,6 +32,23 @@ By default, only logs, metrics, and QC artifacts are retained.
 The script uses optional JSON configuration for metric grouping. If a metrics
 config is not provided or cannot be parsed, default metric groups are used.
 
+Experimental design `runs` keys and any `composition` CV groups must use exact
+Pioneer run names: the complete input filename with only its final extension
+removed. Shortened names and substring matches are not supported. CV groups
+default to the conditions in `runs` when `composition` is absent.
+
+CV requires every configured run to match, at least two distinct replicates per
+group, and at least one complete row with a finite CV and nonzero mean per group.
+If any group cannot be evaluated, a warning explains why and `median_cv` is
+serialized as JSON `null`. Identical nonzero replicate abundances still produce
+a valid `0.0` CV. Fold-change pairs with missing configured runs or no usable
+complete observations are omitted with a warning.
+
+Run the matching, CV, fold-change, and configured three-proteome validation tests
+with `julia --project=julia julia/run_matching_metrics_test.jl` after instantiating
+the Julia project. The filename inventory used by these tests is documented in
+`julia/testdata/README.md`.
+
 ## Regression metrics report layouts
 
 The metrics report (`julia/metrics_report.jl`) supports two directory layouts:

@@ -11,6 +11,15 @@ end
 function run_metrics_report_tests()
     versions = ["v0.6.4", "current"]
 
+    cv_metrics = JSON.parse("""
+        {"cv":{"precursors":{"median_cv":null},"protein_groups":{"median_cv":0.0}}}
+        """; dicttype = Dict)
+    flat_cv_metrics = flatten_metrics(cv_metrics)
+    @assert !haskey(flat_cv_metrics, "cv.precursors.median_cv")
+    @assert flat_cv_metrics["cv.protein_groups.median_cv"] == 0.0
+    @assert format_value(cv_metrics["cv"]["precursors"]["median_cv"]) == NA
+    @assert format_value(cv_metrics["cv"]["protein_groups"]["median_cv"]) != NA
+
     report = build_report(
         Dict{String, Any}(
             "v0.6.4" => Dict{String, Any}(

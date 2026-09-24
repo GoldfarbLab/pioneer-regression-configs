@@ -216,8 +216,9 @@ function fold_change_log_ratios_for_table(
     end
 
     condition_to_columns, missing_runs = condition_columns(quant_columns, design.run_to_condition)
+    incomplete_conditions = Set(design.run_to_condition[run] for run in missing_runs)
     if !isempty(missing_runs)
-        @warn "Runs listed in three-proteome design missing from table; skipping those runs" table=table_label missing_runs=missing_runs
+        @warn "Runs listed in three-proteome design missing from table; fold-change pairs using these conditions are unavailable" table=table_label missing_runs=missing_runs incomplete_conditions=incomplete_conditions
     end
 
     species_col = species_column(df; table_label = table_label)
@@ -229,7 +230,8 @@ function fold_change_log_ratios_for_table(
     for pair in condition_pairs
         numerator_columns = get(condition_to_columns, pair.numerator, Vector{eltype(quant_columns)}())
         denominator_columns = get(condition_to_columns, pair.denominator, Vector{eltype(quant_columns)}())
-        if isempty(numerator_columns) || isempty(denominator_columns)
+        if isempty(numerator_columns) || isempty(denominator_columns) ||
+           pair.numerator in incomplete_conditions || pair.denominator in incomplete_conditions
             @warn "Missing runs for condition pair; skipping fold-change computation" table=table_label numerator=pair.numerator denominator=pair.denominator
             continue
         end
@@ -252,7 +254,7 @@ function fold_change_log_ratios_for_table(
             end
 
             observed_ratio = numerator_mean / denominator_mean
-            if observed_ratio <= 0 || expected_ratio <= 0
+            if !isfinite(observed_ratio) || !isfinite(expected_ratio) || observed_ratio <= 0 || expected_ratio <= 0
                 continue
             end
 
@@ -269,7 +271,10 @@ function fold_change_log_ratios_for_table(
             normalize_metric_label(pair.denominator),
         )
 
-        isempty(log_ratios) && continue
+        if isempty(log_ratios)
+            @warn "Fold-change unavailable: no complete, finite observations for condition pair" table=table_label numerator=pair.numerator denominator=pair.denominator
+            continue
+        end
         pair_log_ratios[pair_label] = log_ratios
         pair_expected_log2[pair_label] = expected_log2_by_species
     end
