@@ -17,7 +17,7 @@ RUN_DIR="${RUN_DIR%/}"
 PIONEER_DIR="${RUN_DIR}/pioneer"
 PARAM_FILE="${RUN_DIR}/adjusted-params/${PIONEER_DATASET_NAME}/${PARAM_FILE}"
 
-export PIONEER_DIR
+export PIONEER_DIR RUN_DIR PIONEER_DATASET_NAME PARAM_FILE
 JULIA=/usr/local/julia/bin/julia
 
 export JULIA_DEPOT_PATH="${RUN_DIR}/julia-depot"
@@ -29,7 +29,5 @@ export OMP_THREAD_LIMIT="${LSB_DJOB_NUMPROC}"
 export OMP_DYNAMIC=FALSE
 export OPENBLAS_NUM_THREADS=1
 
-"$JULIA" --project="$PIONEER_DIR" -e '
-    using Pioneer
-    SearchDIA(ENV["PARAM_FILE"])
-'
+# search_dia.jl converts vendor raw data first for datasets that carry convert_bruker.json
+"$JULIA" --project="$PIONEER_DIR" "${RUN_DIR}/regression-configs/job_scripts/search_dia.jl"

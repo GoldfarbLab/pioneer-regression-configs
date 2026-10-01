@@ -109,6 +109,10 @@
       "order": 5,
       "tags": ["SCIEX_3P"]
     },
+    "Bruker_3P": {
+      "order": 5,
+      "tags": ["fast", "Bruker_3P"]
+    },
     "SCP_Astral_1000pg_12ms": {
       "order": 100,
       "tags": [
