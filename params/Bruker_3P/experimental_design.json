@@ -1,0 +1,47 @@
+{
+  "condition_keys": [
+    "A",
+    "B",
+    "C"
+  ],
+  "runs": {
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_A_REP1": "A",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_A_REP2": "A",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_A_REP3": "A",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_B_REP1": "B",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_B_REP2": "B",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_B_REP3": "B",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_C_REP1": "C",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_C_REP2": "C",
+    "LFQ_Ultra2_diaPASEF_5min_50ng_Condition_C_REP3": "C"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "B",
+      "denominator_condition": "A",
+      "species_ratios": {
+        "ECOLI": 4.0,
+        "HUMAN": 1.0,
+        "YEAST": 0.5
+      }
+    },
+    {
+      "numerator_condition": "C",
+      "denominator_condition": "A",
+      "species_ratios": {
+        "ECOLI": 6.4,
+        "HUMAN": 1.0,
+        "YEAST": 0.1
+      }
+    },
+    {
+      "numerator_condition": "C",
+      "denominator_condition": "B",
+      "species_ratios": {
+        "ECOLI": 1.6,
+        "HUMAN": 1.0,
+        "YEAST": 0.2
+      }
+    }
+  ]
+}

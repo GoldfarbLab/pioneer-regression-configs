@@ -54,7 +54,4 @@ srun \
     --container-image=dennisgoldfarb/julia-python:1.12.6 \
     --container-mounts=/storage3/fs1/d.goldfarb/Active:/storage3/fs1/d.goldfarb/Active,/scratch2/fs1/d.goldfarb:/scratch2/fs1/d.goldfarb/ \
     --container-env=RUN_DIR,PIONEER_DATASET_NAME,PIONEER_DIR,PARAM_FILE,JULIA_DEPOT_PATH,JULIA_NUM_THREADS,OPENBLAS_NUM_THREADS,MKL_NUM_THREADS,BLIS_NUM_THREADS,NUMEXPR_NUM_THREADS,OMP_NUM_THREADS,OMP_THREAD_LIMIT,OMP_DYNAMIC,OMP_PLACES,OMP_PROC_BIND \
-    "$JULIA" --project="$PIONEER_DIR" -e '
-    using Pioneer
-    SearchDIA(ENV["PARAM_FILE"])
-'
+    "$JULIA" --project="$PIONEER_DIR" "${RUN_DIR}/regression-configs/job_scripts/search_dia.jl"
