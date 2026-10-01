@@ -3,7 +3,8 @@
 # A dataset stored as vendor raw data carries params/<dataset>/convert_bruker.json, {"input": "<folder of .d>"}.
 # Its runs are converted first, with the Pioneer under test (so every regression run also tests the converter and
 # never depends on a stored .tdfs format), into RUN_DIR/converted/<dataset>/<param stem>/, and the search reads
-# them from there: the param file's paths.ms_data is replaced in a copy. Other datasets search as before.
+# them from there: the param file's paths.ms_data is replaced in a copy (RUN_DIR/converted/<dataset>/<param stem>_params.json).
+# Other datasets search as before.
 using Pioneer, JSON
 
 param_file = ENV["PARAM_FILE"]
@@ -16,7 +17,8 @@ if isfile(convert_cfg)
     println("Converted $(length(tdfs)) Bruker run(s) from $input to $out in $(round(t; digits = 1)) s")
     params = JSON.parsefile(param_file)
     params["paths"]["ms_data"] = out
-    param_file = replace(param_file, r"\.json$" => "_converted.json")
+    # next to the converted runs, not in adjusted-params: the metrics job reads every search*.json there as a search
+    param_file = out * "_params.json"
     write(param_file, JSON.json(params, 2))
 end
 SearchDIA(param_file)
