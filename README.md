@@ -27,7 +27,8 @@ julia julia/regression_metrics.jl
 
 Set `PIONEER_DELETE_RESULTS=false` to skip cleanup and copy full search results into
 the storage-backed `results/` directory (the original search outputs remain in place).
-By default, only logs, metrics, and QC artifacts are retained.
+By default, logs, metrics, QC artifacts, and each search's `summary.tsv` are retained.
+The summary is archived at `results/<dataset>/<search>/summary.tsv`.
 
 The script uses optional JSON configuration for metric grouping. If a metrics
 config is not provided or cannot be parsed, default metric groups are used.
