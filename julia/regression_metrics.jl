@@ -377,7 +377,7 @@ function cleanup_results_dir(results_dir::AbstractString, metrics_path::Abstract
         end
 
         if isfile(entry)
-            if is_log_file(entry) || basename(entry) == "summary.tsv"
+            if is_log_file(entry) || basename(entry) == "run_summary.tsv"
                 kept_entries += 1
                 continue
             end
@@ -449,7 +449,7 @@ function archive_results(
     end
 
     for entry in readdir(results_dir; join = true)
-        if isfile(entry) && (is_log_file(entry) || basename(entry) == "summary.tsv")
+        if isfile(entry) && (is_log_file(entry) || basename(entry) == "run_summary.tsv")
             safe_mv(entry, joinpath(search_target_dir, basename(entry)); force = true)
         end
     end

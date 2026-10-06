@@ -29,7 +29,7 @@ end
             write(joinpath(results_dir, "intermediate.arrow"), "discard")
             has_summary = search_name != "without_summary"
             summary_contents = "search\tcount\n$(search_name)\t42\n"
-            summary_path = joinpath(results_dir, "summary.tsv")
+            summary_path = joinpath(results_dir, "run_summary.tsv")
             has_summary && write(summary_path, summary_contents)
 
             cleanup_results_dir(results_dir, metrics_path)
@@ -48,9 +48,9 @@ end
             @test isfile(joinpath(dirname(search_target), basename(metrics_path)))
             @test isfile(joinpath(search_target, "search.log"))
             if has_summary
-                @test read(joinpath(search_target, "summary.tsv"), String) == summary_contents
+                @test read(joinpath(search_target, "run_summary.tsv"), String) == summary_contents
             else
-                @test !ispath(joinpath(search_target, "summary.tsv"))
+                @test !ispath(joinpath(search_target, "run_summary.tsv"))
             end
         end
     end
