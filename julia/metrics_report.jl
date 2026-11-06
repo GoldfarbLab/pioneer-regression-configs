@@ -8,69 +8,11 @@ const MAX_FDR_PLOTS = 4
 const NA = ""
 const TEMPLATE_DIR = joinpath(@__DIR__, "templates")
 
-function parse_version_label(label::AbstractString)
-    stripped = startswith(label, "v") ? label[2:end] : label
-    parts = split(stripped, '.')
-    if length(parts) != 3
-        return nothing
-    end
-    nums = Int[]
-    for part in parts
-        m = match(r"^\d+$", part)
-        m === nothing && return nothing
-        push!(nums, parse(Int, part))
-    end
-    nums
-end
+const REPORT_BASELINES_PATH = joinpath(@__DIR__, "..", "params", "report_baselines.json")
 
-function sorted_release_versions(root::AbstractString)
-    labels = String[]
-    if isdir(root)
-        versions = filter(readdir(root; join=true)) do path
-            isdir(path)
-        end
-        labels = map(basename, versions)
-    end
-
-    parsed_labels = Dict{String, Vector{Int}}()
-    for label in labels
-        parsed = parse_version_label(label)
-        parsed === nothing && continue
-        parsed_labels[label] = parsed
-    end
-
-    sorted_parsed_labels = sort(collect(keys(parsed_labels)); lt = (a, b) -> parsed_labels[a] < parsed_labels[b])
-    latest_patch = isempty(sorted_parsed_labels) ? String[] : sorted_parsed_labels[max(1, length(sorted_parsed_labels) - 2):end]
-
-    minor_best = Dict{Tuple{Int, Int}, Tuple{Vector{Int}, String}}()
-    for (label, parsed) in parsed_labels
-        key = (parsed[1], parsed[2])
-        current = get(minor_best, key, (Int[], ""))
-        if isempty(current[1]) || parsed[3] > current[1][3]
-            minor_best[key] = (parsed, label)
-        end
-    end
-    minor_labels = [entry[2] for entry in values(minor_best)]
-    sorted_minor_labels = sort(minor_labels; lt = (a, b) -> parsed_labels[a] < parsed_labels[b])
-    latest_minor = isempty(sorted_minor_labels) ? String[] : sorted_minor_labels[max(1, length(sorted_minor_labels) - 2):end]
-
-    selected = Set{String}()
-    for label in latest_patch
-        push!(selected, label)
-    end
-    for label in latest_minor
-        push!(selected, label)
-    end
-    push!(selected, "v0.6.4")
-
-    sort(collect(selected); lt = (a, b) -> begin
-        parsed_a = parse_version_label(a)
-        parsed_b = parse_version_label(b)
-        if parsed_a === nothing || parsed_b === nothing
-            return a < b
-        end
-        return parsed_a < parsed_b
-    end)
+# Release columns shown before develop and current, in the order listed in params/report_baselines.json.
+function report_baseline_versions(path::AbstractString = REPORT_BASELINES_PATH)
+    String.(JSON.parsefile(path)["releases"])
 end
 
 function flatten_metrics(metrics::Any; prefix::AbstractString = "")
@@ -1176,7 +1118,7 @@ function main()
     plots_scan_root = current_root
     html_output_path = joinpath(run_dir, "results", "metrics_report.html")
 
-    versions = sorted_release_versions(release_root)
+    versions = report_baseline_versions()
     push!(versions, "develop")
     push!(versions, "current")
 
