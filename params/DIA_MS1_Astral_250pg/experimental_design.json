@@ -1,0 +1,56 @@
+{
+  "condition_keys": [
+    "A",
+    "B",
+    "C"
+  ],
+  "runs": {
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP1": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP2": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP3": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP4": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP5": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_A_REP6": "A",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP1": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP2": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP3": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP4": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP5": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_B_REP6": "B",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP1": "C",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP2": "C",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP3": "C",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP4": "C",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP5": "C",
+    "LFQ_Astral_DIA_5min_250pg_Condition_C_REP6": "C"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "B",
+      "denominator_condition": "A",
+      "species_ratios": {
+        "HUMAN": 1.0,
+        "YEAST": 0.5,
+        "ECOLI": 4.0
+      }
+    },
+    {
+      "numerator_condition": "C",
+      "denominator_condition": "A",
+      "species_ratios": {
+        "HUMAN": 1.0,
+        "YEAST": 0.1,
+        "ECOLI": 6.4
+      }
+    },
+    {
+      "numerator_condition": "C",
+      "denominator_condition": "B",
+      "species_ratios": {
+        "HUMAN": 1.0,
+        "YEAST": 0.2,
+        "ECOLI": 1.6
+      }
+    }
+  ]
+}

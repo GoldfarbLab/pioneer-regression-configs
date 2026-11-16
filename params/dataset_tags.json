@@ -275,6 +275,18 @@
         "fast",
         "MacCoss_Eclipse_Normalization"
       ]
+    },
+    "DDA_Astral_250pg": {
+      "order": 10,
+      "tags": ["MS1_quant", "DDA_Astral_250pg"]
+    },
+    "DDA_timsTOF_250pg": {
+      "order": 10,
+      "tags": ["MS1_quant", "DDA_timsTOF_250pg"]
+    },
+    "DIA_MS1_Astral_250pg": {
+      "order": 10,
+      "tags": ["MS1_quant", "DIA_MS1_Astral_250pg"]
     }
   }
 }

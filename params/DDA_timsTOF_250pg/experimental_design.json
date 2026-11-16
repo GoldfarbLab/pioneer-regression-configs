@@ -1,0 +1,25 @@
+{
+  "condition_keys": [
+    "A",
+    "B"
+  ],
+  "runs": {
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_A_REP1": "A",
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_A_REP2": "A",
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_A_REP3": "A",
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_B_REP1": "B",
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_B_REP2": "B",
+    "LFQ_Ultra_PASEF_5min_250pg_Condition_B_REP3": "B"
+  },
+  "expected_ratios": [
+    {
+      "numerator_condition": "B",
+      "denominator_condition": "A",
+      "species_ratios": {
+        "HUMAN": 1.0,
+        "YEAST": 0.5,
+        "ECOLI": 4.0
+      }
+    }
+  ]
+}

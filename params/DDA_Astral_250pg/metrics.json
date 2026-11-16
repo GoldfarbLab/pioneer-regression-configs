@@ -1,0 +1,11 @@
+{
+  "search": [
+    "runtime",
+    "identification",
+    "fold-change",
+    "CV"
+  ],
+  "search_entrap": [
+    "eFDR"
+  ]
+}
